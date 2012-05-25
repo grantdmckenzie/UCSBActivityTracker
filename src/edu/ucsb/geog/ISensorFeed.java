@@ -1,5 +1,6 @@
 package edu.ucsb.geog;
 
 public interface ISensorFeed {
-	public long timestamp();
+	public Fix getSensorValue();
+	// Add overload functions for accel and wifi
 }

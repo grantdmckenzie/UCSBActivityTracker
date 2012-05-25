@@ -20,7 +20,7 @@ public class UCSBActivityTrackerActivity extends Activity {
         
         mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         accelerometer = new Accelerometer(this, mSensorManager);
-        
+        mCoordinates = new Coordinates();
         
         setContentView(accelerometer);
     }

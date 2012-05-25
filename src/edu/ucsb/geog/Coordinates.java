@@ -6,20 +6,23 @@
  */
 
 package edu.ucsb.geog;
+import android.database.Observable;
 import android.location.Location;
 import android.location.LocationListener;
 import android.os.Bundle;
 
-public class Coordinates implements LocationListener, ISensorFeed {
+public class Coordinates extends Observable implements LocationListener, ISensorFeed {
 	private double latitude;
 	private double longitude;
 	private long timestamp;
+	private Fix newFix;
 	
 	@Override
 	public void onLocationChanged(Location loc) {
 		timestamp = System.currentTimeMillis()/1000;
 		latitude = loc.getLatitude();
 		longitude = loc.getLongitude();
+		newFix = new Fix(latitude, longitude, timestamp);
 	}
 
 	@Override
@@ -38,7 +41,9 @@ public class Coordinates implements LocationListener, ISensorFeed {
 	}
 
 	@Override
-	public long timestamp() {
-		return timestamp;
+	public Fix getSensorValue() {
+		return newFix;
 	}
+	
+	
 }
