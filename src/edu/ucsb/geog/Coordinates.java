@@ -11,7 +11,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.os.Bundle;
 
-public class Coordinates extends Observable implements LocationListener, ISensorFeed {
+public class Coordinates extends Observable<Fix> implements LocationListener, ISensorFeed {
 	private double latitude;
 	private double longitude;
 	private long timestamp;
