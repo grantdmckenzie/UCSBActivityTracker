@@ -12,12 +12,13 @@ public class Accelerometer extends Observable implements SensorEventListener, Ru
 {
 
 	private SensorManager mSensorManager;
-	private Sensor mAccelerometer;	
+	private Sensor mAccelerometer;
 	private long msInterval; 
 	private HashMap<String, Double> fix;
 	private double accelx = 0;
 	private double accely = 0;
 	private double accelz = 0;
+	
 	
 	public Accelerometer(SensorManager mSensorManager, long msInterval) {
 					
@@ -51,35 +52,28 @@ public class Accelerometer extends Observable implements SensorEventListener, Ru
 				
 		accelx = event.values[0];
 		accely = event.values[1];
-		accelz = event.values[2];
-						
+		accelz = event.values[2];			
 	}
 	
 
 	
 	@Override
 	public void run() 
-	{
-		fix =  new HashMap<String, Double>();
-		fix.put("accelx", accelx);
-		fix.put("accely", accely);
-		fix.put("accelz", accelz);
-		
-		setChanged();
-		notifyObservers();
-		
-		try 
-		{
-			Thread.sleep(msInterval);             
-		} 
-		catch (InterruptedException ex) 
-		{
-		}	
+	{		
+		while(true)
+		{		
+			fix.put("accelx", accelx);
+			fix.put("accely", accely);
+			fix.put("accelz", accelz);
+			setChanged();
+			notifyObservers(fix);
+			try 
+			{
+				Thread.sleep(msInterval);             
+			} 
+			catch (InterruptedException ex) 
+			{
+			}			
+		}		
 	}
-	
-	public HashMap getFix() 
-	{
-		return fix;
-	}
-
 }
