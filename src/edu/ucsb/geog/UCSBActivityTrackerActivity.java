@@ -5,16 +5,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
-import java.util.Set;
-
-import android.R.string;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.hardware.SensorManager;
+import android.location.Criteria;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.wifi.ScanResult;
@@ -22,7 +19,7 @@ import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.widget.EditText;
+import android.util.Log;
 import android.widget.TextView;
 
 public class UCSBActivityTrackerActivity extends Activity implements Observer {
@@ -30,6 +27,7 @@ public class UCSBActivityTrackerActivity extends Activity implements Observer {
 	//declare widgets
 	private TextView mAccelerometerDisplay;
 	private TextView mWifiDisplay;
+	private TextView mCoordinateDisplay;
 
 	//declare variables for accelerometer
 	private SensorManager mSensorManager;
@@ -38,7 +36,6 @@ public class UCSBActivityTrackerActivity extends Activity implements Observer {
 	private Thread accelThread;
 	private Handler accelHandler = null;
 	private LocationManager locationManager;
-	private LocationListener locationListener;
 	private ArrayList<HashMap<String,Double>> fixList;
 
 	//declare variables for WIFI
@@ -75,6 +72,7 @@ public class UCSBActivityTrackerActivity extends Activity implements Observer {
 		// initiate display textviews
 		mAccelerometerDisplay = (TextView)findViewById(R.id.accelerometerDisplay);
 		mWifiDisplay = (TextView)findViewById(R.id.wifiDisplay);
+		mCoordinateDisplay = (TextView)findViewById(R.id.coordinateDisplay);
 
 		// initiate variables for accelerometer
 		mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
@@ -120,7 +118,7 @@ public class UCSBActivityTrackerActivity extends Activity implements Observer {
 		accelerometer.startRecording();
 		accelThread.start();
 		mWifiManager.startScan();
-		locationManager.requestLocationUpdates(locationManager.GPS_PROVIDER,0, 0, locationListener);
+		locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, coordinate);
 	}
 	
 
@@ -128,7 +126,7 @@ public class UCSBActivityTrackerActivity extends Activity implements Observer {
 	protected void onPause() {
 		// TODO Auto-generated method stub
 		super.onPause();
-		locationManager.removeUpdates(locationListener);
+		locationManager.removeUpdates(coordinate);
 	}
 	
 	@Override
@@ -139,7 +137,8 @@ public class UCSBActivityTrackerActivity extends Activity implements Observer {
 		accelerometer.stopRecording();  
 		accelThread.stop();
 		unregisterReceiver(wifiReceiver);
-		locationManager.removeUpdates(locationListener);
+		locationManager.removeUpdates(coordinate);
+		// coordThread.stop();
 	}
 
 
@@ -149,22 +148,23 @@ public class UCSBActivityTrackerActivity extends Activity implements Observer {
 		// use fix to handle the data from all sensors
 		fix  = (HashMap)data;
 		
+		Message message = new Message();
+		Bundle bundle = new Bundle();
 		
 		// if the values come from accelerometer do the following actions
 		if(observable instanceof Accelerometer)
 		{		
 			fix = accelerometer.getFix();  // Grant Edit
-			Message message = new Message();
-			Bundle bundle = new Bundle();
 			bundle.putCharSequence("value", "Accelerometer: x:"+fix.get("accelx")+", y:"+fix.get("accely")+", z:"+fix.get("accelz"));
 			message.setData(bundle);
 			accelHandler.sendMessage(message);
 		}	
 		else if(observable instanceof Coordinates) {
+			Log.v("Location", "Location");
 			fix = coordinate.getFix();
 		}
 		
 		// Add the fix to the fixlist (arraylist of hashmaps)
-		fixList.add(fix);
+		// fixList.add(fix);
 	}
 }

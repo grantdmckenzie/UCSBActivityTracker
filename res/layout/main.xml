@@ -15,5 +15,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="wifi" />
-
+	<TextView
+        android:id="@+id/coordinateDisplay"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="GPS Fix" />
 </LinearLayout>

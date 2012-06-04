@@ -12,6 +12,7 @@ import java.util.Observable;
 import android.location.Location;
 import android.location.LocationListener;
 import android.os.Bundle;
+import android.util.Log;
 
 public class Coordinates extends Observable implements LocationListener, Runnable, Fix {
 	private double latitude;
@@ -21,6 +22,7 @@ public class Coordinates extends Observable implements LocationListener, Runnabl
 	
 	@Override
 	public void onLocationChanged(Location loc) {
+		
 		Long l = new Long(System.currentTimeMillis()/1000);
 		timestamp = l.doubleValue();
 		latitude = loc.getLatitude();
@@ -32,6 +34,7 @@ public class Coordinates extends Observable implements LocationListener, Runnabl
 		fix.put("lat", latitude);
 		fix.put("lng", longitude);
 		fix.put("ts", timestamp);
+		Log.v("Location", "Latitude: " + latitude);
 	}
 
 	@Override
@@ -58,7 +61,7 @@ public class Coordinates extends Observable implements LocationListener, Runnabl
 			notifyObservers(fix);
 			try 
 			{
-				Thread.sleep(60000);             
+				Thread.sleep(5000);             
 			} 
 			catch (InterruptedException ex) 
 			{

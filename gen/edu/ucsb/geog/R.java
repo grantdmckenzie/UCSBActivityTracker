@@ -15,6 +15,7 @@ public final class R {
     }
     public static final class id {
         public static final int accelerometerDisplay=0x7f050000;
+        public static final int coordinateDisplay=0x7f050002;
         public static final int wifiDisplay=0x7f050001;
     }
     public static final class layout {

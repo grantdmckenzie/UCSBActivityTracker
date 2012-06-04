@@ -7,6 +7,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.util.Log;
 
 public class Accelerometer extends Observable implements SensorEventListener, Runnable, Fix
 {
@@ -62,6 +63,7 @@ public class Accelerometer extends Observable implements SensorEventListener, Ru
 	{		
 		while(true)
 		{	
+			
 			fix.put("sensor", 1.0);	// Grant edit: for identifying which sensor it is.
 			fix.put("accelx", accelx);
 			fix.put("accely", accely);
