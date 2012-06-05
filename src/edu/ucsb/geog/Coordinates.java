@@ -23,6 +23,7 @@ public class Coordinates extends Observable implements Runnable, Fix {
 	private HashMap<String, Double> fix;
 	private LocationManager locationManager;
 	private LocationListener locationListener;
+	private boolean running = true;
 	
 	public Coordinates(LocationManager locationManager) {
 		fix =  new HashMap<String, Double>();
@@ -33,11 +34,13 @@ public class Coordinates extends Observable implements Runnable, Fix {
 	public void startRecording()
 	{
 		locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+		running = true;
 	}
 	
 	public void stopRecording()
 	{
 		locationManager.removeUpdates(locationListener);
+		running = false;
 	}
 
 	
@@ -77,7 +80,7 @@ public class Coordinates extends Observable implements Runnable, Fix {
 	
 	@Override
 	public void run() {
-		while(true)
+		while(running)
 		{		
 			// after 60 seconds, send the fix back to the observer
 			setChanged();

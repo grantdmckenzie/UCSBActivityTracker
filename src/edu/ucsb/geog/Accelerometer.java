@@ -19,6 +19,7 @@ public class Accelerometer extends Observable implements SensorEventListener, Ru
 	private double accelx = 0;
 	private double accely = 0;
 	private double accelz = 0;
+	private boolean running = true;
 	
 	
 	public Accelerometer(SensorManager mSensorManager, long msInterval) {
@@ -33,11 +34,13 @@ public class Accelerometer extends Observable implements SensorEventListener, Ru
 	public void startRecording()
 	{
 		mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+		running = true;
 	}
 	
 	public void stopRecording()
 	{
 		mSensorManager.unregisterListener(this);
+		running = false;
 	}
 
 	@Override
@@ -60,7 +63,7 @@ public class Accelerometer extends Observable implements SensorEventListener, Ru
 	@Override
 	public void run() 
 	{		
-		while(true)
+		while(running)
 		{	
 			
 			fix.put("sensor", 1.0);	// Grant edit: for identifying which sensor it is.

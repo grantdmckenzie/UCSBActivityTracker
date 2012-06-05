@@ -3,6 +3,8 @@ package edu.ucsb.geog;
 
 import java.util.HashMap;
 import java.util.Observable;
+
+import android.location.LocationManager;
 import android.net.wifi.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,6 +17,7 @@ public class Wifi extends Observable implements Runnable {
 	private ArrayList<String[]> values = new ArrayList<String[]>();
 	private HashMap fix = new HashMap();
 	private long interval;
+	private boolean running = true;
 	
     public Wifi(WifiManager wifi) {
     	 this.wifi = wifi; 
@@ -24,9 +27,21 @@ public class Wifi extends Observable implements Runnable {
    	 this.interval = msIntervall; 
    	 this.wifi = wifi;
    }
+    
+	public void startRecording()
+	{
+		running = true;
+	}
+	
+	public void stopRecording()
+	{
+		running = false;
+	}
+    
+    
     public void run(){
 
-    		while(true)
+    	while(running)
    		 {
 		       	 
     			 try {

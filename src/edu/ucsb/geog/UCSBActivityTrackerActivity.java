@@ -1,25 +1,21 @@
 package edu.ucsb.geog;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.Vector;
+
 import android.app.Activity;
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
 import android.content.IntentFilter;
 import android.hardware.SensorManager;
 import android.location.LocationManager;
-import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 import android.widget.TextView;
-import java.util.Iterator;
 public class UCSBActivityTrackerActivity extends Activity implements Observer {
 
 	//declare widgets
@@ -34,7 +30,7 @@ public class UCSBActivityTrackerActivity extends Activity implements Observer {
 	private Thread accelThread;
 	private Handler accelHandler = null;
 	private LocationManager locationManager;
-	private ArrayList<HashMap<String,Double>> fixList;
+	private Vector<HashMap<String, Double>> fixVector;
 	private WifiManager wifiManager;
 	//declare a hashmap to store the values from sensors
 	private HashMap fix;
@@ -49,7 +45,7 @@ public class UCSBActivityTrackerActivity extends Activity implements Observer {
 		super.onCreate(savedInstanceState);
 		
 		setContentView(R.layout.main);
-
+		fixVector = new Vector<HashMap<String, Double>>();
 		
 		// initiate display textviews
 		mAccelerometerDisplay = (TextView)findViewById(R.id.accelerometerDisplay);
@@ -101,6 +97,7 @@ public class UCSBActivityTrackerActivity extends Activity implements Observer {
 		accelerometer.startRecording();
 		accelThread.start();
 		wifithread.start();
+		wifi.startRecording();
 		coordinate.startRecording();
 		coordthread.start();
 		
@@ -112,6 +109,12 @@ public class UCSBActivityTrackerActivity extends Activity implements Observer {
 		// TODO Auto-generated method stub
 		super.onPause();
 		// wifithread.suspend();
+		accelerometer.stopRecording();  
+		accelThread.stop();
+		wifithread.stop();
+		wifi.stopRecording();
+		coordinate.stopRecording();
+		coordthread.stop();
 	}
 	
 	@Override
@@ -122,6 +125,7 @@ public class UCSBActivityTrackerActivity extends Activity implements Observer {
 		accelerometer.stopRecording();  
 		accelThread.stop();
 		wifithread.stop();
+		wifi.stopRecording();
 		coordinate.stopRecording();
 		coordthread.stop();
 	}
@@ -140,9 +144,9 @@ public class UCSBActivityTrackerActivity extends Activity implements Observer {
 		if(observable instanceof Accelerometer)
 		{		
 			fix = accelerometer.getFix();  // Grant Edit
-			bundle.putCharSequence("value", "Accelerometer: x:"+fix.get("accelx")+", y:"+fix.get("accely")+", z:"+fix.get("accelz"));
+			/*bundle.putCharSequence("value", "Accelerometer: x:"+fix.get("accelx")+", y:"+fix.get("accely")+", z:"+fix.get("accelz"));
 			message.setData(bundle);
-			accelHandler.sendMessage(message);
+			accelHandler.sendMessage(message); */
 		}	
 		else if(observable instanceof Coordinates) {
 			// Log.v("Location", "Location");
@@ -166,6 +170,9 @@ public class UCSBActivityTrackerActivity extends Activity implements Observer {
 		
 		// Add the fix to the fixlist (arraylist of hashmaps)
 		// fixList.add(fix);
-		Log.v("New Fix Added", fix.toString());
+		fixVector.add(fix);
+		// Log.v("New Fix Added", fix.toString());
+		Log.v("Vector Size", fixVector.size()+"");
+		
 	}
 }
