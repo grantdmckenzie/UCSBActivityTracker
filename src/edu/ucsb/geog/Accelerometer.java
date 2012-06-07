@@ -3,6 +3,9 @@ package edu.ucsb.geog;
 import java.util.HashMap;
 import java.util.Observable;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -15,7 +18,7 @@ public class Accelerometer extends Observable implements SensorEventListener, Ru
 	private SensorManager mSensorManager;
 	private Sensor mAccelerometer;
 	private long msInterval; 
-	private HashMap<String, Double> fix;
+	private JSONObject fix;
 	private double accelx = 0;
 	private double accely = 0;
 	private double accelz = 0;
@@ -27,7 +30,7 @@ public class Accelerometer extends Observable implements SensorEventListener, Ru
 		this.mSensorManager = mSensorManager;
 		mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 		this.msInterval = msInterval;
-		fix =  new HashMap<String, Double>();
+		fix =  new JSONObject();
 		
 	}
 	
@@ -66,10 +69,16 @@ public class Accelerometer extends Observable implements SensorEventListener, Ru
 		while(running)
 		{	
 			
-			fix.put("sensor", 1.0);	// Grant edit: for identifying which sensor it is.
-			fix.put("accelx", accelx);
-			fix.put("accely", accely);
-			fix.put("accelz", accelz);
+			try {
+				fix.put("sensor", 1.0);
+				fix.put("accelx", accelx);
+				fix.put("accely", accely);
+				fix.put("accelz", accelz);
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}	// Grant edit: for identifying which sensor it is.
+			
 			setChanged();
 			notifyObservers(fix);
 			try 
@@ -83,7 +92,7 @@ public class Accelerometer extends Observable implements SensorEventListener, Ru
 	}
 
 	@Override
-	public HashMap<String, Double> getFix() {
+	public JSONObject getFix() {
 		return fix;
 	}
 }

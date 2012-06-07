@@ -9,6 +9,9 @@ package edu.ucsb.geog;
 import java.util.HashMap;
 import java.util.Observable;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 
 import android.location.Location;
 import android.location.LocationListener;
@@ -20,13 +23,13 @@ public class Coordinates extends Observable implements Runnable, Fix {
 	private double latitude;
 	private double longitude;
 	private double timestamp;
-	private HashMap<String, Double> fix;
+	private JSONObject fix;
 	private LocationManager locationManager;
 	private LocationListener locationListener;
 	private boolean running = true;
 	
 	public Coordinates(LocationManager locationManager) {
-		fix =  new HashMap<String, Double>();
+		
 		this.locationManager = locationManager;
 		this.locationListener = new MyLocationListener();
 	}
@@ -55,11 +58,18 @@ public class Coordinates extends Observable implements Runnable, Fix {
 			longitude = loc.getLongitude();
 			
 			// When the location changes, add the new location to the fix object
-			fix =  new HashMap<String, Double>();
-			fix.put("sensor", 3.0);
-			fix.put("lat", latitude);
-			fix.put("lng", longitude);
-			fix.put("ts", timestamp);
+			
+			try {
+				fix =  new JSONObject();
+				fix.put("sensor", 3.0);
+				fix.put("lat", latitude);
+				fix.put("lng", longitude);
+				fix.put("ts", timestamp);
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
 		}
 	
 		@Override
@@ -83,21 +93,25 @@ public class Coordinates extends Observable implements Runnable, Fix {
 		while(running)
 		{		
 			// after 60 seconds, send the fix back to the observer
-			setChanged();
-			notifyObservers(fix);
-			try 
-			{
-				Thread.sleep(10000);  
-			} 
-			catch (InterruptedException ex) 
-			{
-				// nothing to see here.  Move along.
-			}			
+			if (fix != null) {
+				setChanged();
+				notifyObservers(fix);
+				try 
+				{
+					Thread.sleep(10000);  
+				} 
+				catch (InterruptedException ex) 
+				{
+					// nothing to see here.  Move along.
+				}			
+			} else {
+				// Log.v("Coordinates", "Coordinates are null");
+			}
 		}
 	}
 
 	@Override
-	public HashMap<String, Double> getFix() {
+	public JSONObject getFix() {
 		// Send that fix back yo
 		return fix;
 	}

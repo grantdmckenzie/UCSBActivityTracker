@@ -9,13 +9,16 @@ import android.net.wifi.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 public class Wifi extends Observable implements Runnable {
 	 
     /** Called when the activity is first created. */
  
 	private WifiManager wifi;
 	private ArrayList<String[]> values = new ArrayList<String[]>();
-	private HashMap fix = new HashMap();
+	private JSONObject fix = new JSONObject();
 	private long interval;
 	private boolean running = true;
 	
@@ -57,12 +60,15 @@ public class Wifi extends Observable implements Runnable {
     			 }
     			 catch(InterruptedException e){
     				 e.printStackTrace();
-    			 }
+    			 } catch (JSONException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 
     		}
    		 
     }
-    public HashMap getFix()
+    public JSONObject getFix()
     {
     	return fix;
     }
