@@ -1,6 +1,5 @@
 package edu.ucsb.geog;
 
-import java.util.HashMap;
 import java.util.Observable;
 
 import org.json.JSONException;
@@ -10,7 +9,6 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.util.Log;
 
 public class Accelerometer extends Observable implements SensorEventListener, Runnable, Fix
 {

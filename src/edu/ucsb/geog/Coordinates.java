@@ -6,23 +6,23 @@
  */
 
 package edu.ucsb.geog;
-import java.util.HashMap;
 import java.util.Observable;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
-import android.util.Log;
 
 public class Coordinates extends Observable implements Runnable, Fix {
 	private double latitude;
 	private double longitude;
 	private double timestamp;
+	private double accuracy;
+	private double speed;
+	private double altitude;
 	private JSONObject fix;
 	private LocationManager locationManager;
 	private LocationListener locationListener;
@@ -56,7 +56,10 @@ public class Coordinates extends Observable implements Runnable, Fix {
 			timestamp = l.doubleValue();
 			latitude = loc.getLatitude();
 			longitude = loc.getLongitude();
-			
+			accuracy = loc.getAccuracy();
+			speed = loc.getSpeed();
+			altitude = loc.getAltitude();
+
 			// When the location changes, add the new location to the fix object
 			
 			try {
@@ -65,6 +68,10 @@ public class Coordinates extends Observable implements Runnable, Fix {
 				fix.put("lat", latitude);
 				fix.put("lng", longitude);
 				fix.put("ts", timestamp);
+				fix.put("accuracy", accuracy);
+				fix.put("speed", speed);
+				fix.put("altitude",altitude);
+				
 			} catch (JSONException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

@@ -115,7 +115,7 @@ public class UCSBActivityTrackerActivity extends Activity implements Observer {
 		    @Override
 		    public void run() {
 	            while(running) {
-	            	if(fixVector.size() == 20) {
+	            	if(fixVector.size() == 200) {
 		                Log.v("Size match", fixVector.size()+"");
 		                running = false;
 		                serializeFixVector();
@@ -217,7 +217,6 @@ public class UCSBActivityTrackerActivity extends Activity implements Observer {
 		}
 		
 		// Add the fix to the fixlist (arraylist of hashmaps)
-		// fixList.add(fix);
 		fixVector.add(fix);
 		Log.v("Vector Size", fixVector.size()+"");
 		
