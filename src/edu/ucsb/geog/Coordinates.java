@@ -105,7 +105,7 @@ public class Coordinates extends Observable implements Runnable, Fix {
 				notifyObservers(fix);
 				try 
 				{
-					Thread.sleep(10000);  
+					Thread.sleep(30000);  
 				} 
 				catch (InterruptedException ex) 
 				{

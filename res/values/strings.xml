@@ -3,5 +3,6 @@
 
     <string name="hello">Hello World, UCSBActivityTrackerActivity!</string>
     <string name="app_name">UCSBActivityTracker</string>
-
+    <string name="local_service_started">Select to return to UCSBActivityTracker.</string>
+    <string name="local_service_label">UCSBActivityTracker is ON</string>
 </resources>

@@ -1,26 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:orientation="vertical" >
-
-    <TextView
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:text="Application is running"
-        android:id="@+id/accelerometerDisplay"
-         />
-    <TextView
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:text="" 
-        android:id="@+id/wifiDisplay"
-        />
-    <TextView
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:text=""
-        android:id="@+id/coordinateDisplay"
-         />
-
+    android:background="#eeffff">
+    
+    <TextView android:text="" 
+		android:id="@+id/TextView01" 
+		android:layout_width="wrap_content" 
+		android:layout_margin="6dp"
+		android:textSize="18sp"
+		android:textColor="#333333"
+		android:layout_height="wrap_content"></TextView>
+		<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+		    android:layout_width="fill_parent"
+		    android:layout_height="wrap_content"
+		    android:stretchColumns="1">
+	
+				<Button android:text="" 
+					android:id="@+id/btn1" 
+					android:layout_width="wrap_content" 
+					android:layout_marginTop="17dp"
+					android:layout_marginLeft="5dp"
+					android:layout_height="wrap_content"></Button>
+ 		</TableLayout>	
 </LinearLayout>

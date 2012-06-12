@@ -1,12 +1,8 @@
 package edu.ucsb.geog;
 
 
-import java.util.HashMap;
 import java.util.Observable;
-
-import android.location.LocationManager;
 import android.net.wifi.*;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.json.JSONException;
@@ -17,9 +13,10 @@ public class Wifi extends Observable implements Runnable {
     /** Called when the activity is first created. */
  
 	private WifiManager wifi;
-	private ArrayList<String[]> values = new ArrayList<String[]>();
 	private JSONObject fix = new JSONObject();
 	private long interval;
+	private long timestamp;
+	private int count;
 	private boolean running = true;
 	
     public Wifi(WifiManager wifi) {
@@ -49,10 +46,14 @@ public class Wifi extends Observable implements Runnable {
 		       	 
     			 try {
     				 List <ScanResult> scanresults = wifi.getScanResults();
+    				 timestamp = new Long(System.currentTimeMillis()/1000);
     		         fix.put("sensor", 2.0);
+    		         fix.put("ts", timestamp);
+    		         count = 0;
     		         for (ScanResult sr: scanresults)
     		         {
-    		         	fix.put(sr.SSID, sr);
+    		         	fix.put(count+"", sr);
+    		         	count++;
     		         }
 		         setChanged();
 		         notifyObservers(fix);
