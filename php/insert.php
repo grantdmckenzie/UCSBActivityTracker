@@ -5,8 +5,8 @@
 	$bd = mysql_connect($mysql_hostname, $mysql_user, $mysql_password) or die("Opps some thing went wrong");
 	mysql_select_db($mysql_database, $bd) or die("Opps some thing went wrong");
 
-	$deviceid = mysql_escape_string($_GET['devid']);
-	$data = mysql_escape_string($_GET['data']);
+	$deviceid = mysql_escape_string($_POST['devid']);
+	$data = mysql_escape_string($_POST['data']);
 
 	$d = json_decode(stripslashes($data));
 	sortData($d, $deviceid);

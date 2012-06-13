@@ -100,7 +100,7 @@ public class ActivityTrackerService extends Service implements Observer {
 		    public void run() {
 		    	Looper.prepare();
 		    	while(running) {
-					if(fixVector.size() == 5) {
+					if(fixVector.size() == 100) {
 				        Log.v("Size match", fixVector.size()+"");
 				        running = false;
 				        serializeFixVector();
@@ -151,6 +151,7 @@ public class ActivityTrackerService extends Service implements Observer {
 		}	
 		else if(observable instanceof Coordinates) {
 			fix = coordinate.getFix();
+			// Log.v("Coordinates", "Coordinates");
 		} 
 		else if (observable instanceof Wifi){
 			fix = wifi.getFix();
@@ -158,7 +159,7 @@ public class ActivityTrackerService extends Service implements Observer {
 		
 		// Add the fix to the vector
 		fixVector.add(fix);
-		Log.v("Vector Size", fixVector.size()+"");
+		Log.v("Vector Size", "Vector Size: "+fixVector.size());
 	}
 	
 	private void serializeFixVector() {

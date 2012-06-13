@@ -19,6 +19,8 @@ import android.os.Bundle;
 public class Coordinates extends Observable implements Runnable, Fix {
 	private double latitude;
 	private double longitude;
+	private double prevlat;
+	private double prevlng;
 	private double timestamp;
 	private double accuracy;
 	private double speed;
@@ -32,6 +34,8 @@ public class Coordinates extends Observable implements Runnable, Fix {
 		
 		this.locationManager = locationManager;
 		this.locationListener = new MyLocationListener();
+		prevlat = 0;
+		prevlng = 0;
 	}
 	
 	public void startRecording()
@@ -100,11 +104,13 @@ public class Coordinates extends Observable implements Runnable, Fix {
 		while(running)
 		{		
 			// after 60 seconds, send the fix back to the observer
-			if (fix != null) {
+			if (fix != null && latitude != prevlat && longitude != prevlng) {
 				setChanged();
 				notifyObservers(fix);
 				try 
 				{
+					prevlat = latitude;
+					prevlng = longitude;
 					Thread.sleep(30000);  
 				} 
 				catch (InterruptedException ex) 
