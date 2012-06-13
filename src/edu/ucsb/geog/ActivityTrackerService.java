@@ -1,5 +1,9 @@
 package edu.ucsb.geog;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Observable;
@@ -27,6 +31,7 @@ import android.hardware.SensorManager;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.wifi.WifiManager;
+import android.os.Environment;
 import android.os.IBinder;
 import android.os.Looper;
 import android.telephony.TelephonyManager;
@@ -38,7 +43,9 @@ public class ActivityTrackerService extends Service implements Observer {
 	private SensorManager mSensorManager;
 	private Accelerometer accelerometer;
 	private Coordinates coordinate;
+	private NetworkCoords networkcoords;
 	private LocationManager locationManager;
+	private LocationManager locationManager2;
 	private Vector<JSONObject> fixVector;
 	private JSONObject fix;
 	private WifiManager wifiManager;
@@ -47,23 +54,28 @@ public class ActivityTrackerService extends Service implements Observer {
 	private Thread accelThread;
 	private Thread coordthread;
 	private Thread vectorthread;
+	private Thread networkthread;
 	private boolean running = true;
 	private String URL = "http://geogrant.com/UCSB/ucsbactivitytracker/insert.php";
 	private TelephonyManager tm;
 	private ConnectivityManager connectivity;
     private String deviceId;
     private NotificationManager mNM;
+	private File dir = null;
+	private File tracker_file = null;
     
 	private int NOTIFICATION = R.string.local_service_started;
 	
-	
 	@Override
 	public void onCreate() {
-		mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
 		
+		mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
 		showNotification();
 		
 		fixVector = new Vector<JSONObject>();
+		File root = Environment.getExternalStorageDirectory();
+        File dir = new File(root, "./ucsbactivitytracker/");
+        dir.mkdir();
 		
 		// For defining unique device id
 		tm = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
@@ -87,10 +99,16 @@ public class ActivityTrackerService extends Service implements Observer {
 		coordinate.addObserver(this);
 		coordthread = new Thread(coordinate);
 		
+		// Coordinates (GPS)
+		locationManager2 = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+		networkcoords = new NetworkCoords(locationManager2);
+		networkcoords.addObserver(this);
+		networkthread = new Thread(networkcoords);
+		
 		// Wi-Fi
 		wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
         wifi = new Wifi(wifiManager, 10000);
-        IntentFilter filter = new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION);
+        // IntentFilter filter = new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION);
         wifi.addObserver(this);   
         wifithread = new Thread(wifi);
         
@@ -100,10 +118,12 @@ public class ActivityTrackerService extends Service implements Observer {
 		    public void run() {
 		    	Looper.prepare();
 		    	while(running) {
-					if(fixVector.size() == 100) {
+					if(fixVector.size() == 8) {
 				        Log.v("Size match", fixVector.size()+"");
 				        running = false;
-				        serializeFixVector();
+				        // serializeFixVector();
+				        Long ts = new Long(System.currentTimeMillis()/1000);
+				        writeToFile(ts);
 				    }
 				}
 		    	Looper.loop();
@@ -119,6 +139,8 @@ public class ActivityTrackerService extends Service implements Observer {
 		wifi.startRecording();
 		coordinate.startRecording();
 		coordthread.start();
+		networkcoords.startRecording();
+		networkthread.start();
 		vectorthread.start();
 	}
 	
@@ -132,6 +154,8 @@ public class ActivityTrackerService extends Service implements Observer {
 		coordinate.stopRecording();
 		coordthread = null;
 		vectorthread = null;
+		networkcoords.stopRecording();
+		networkthread = null;
 	}
 	
 	@Override
@@ -155,6 +179,9 @@ public class ActivityTrackerService extends Service implements Observer {
 		} 
 		else if (observable instanceof Wifi){
 			fix = wifi.getFix();
+		}
+		else if (observable instanceof NetworkCoords){
+			fix = networkcoords.getFix();
 		}
 		
 		// Add the fix to the vector
@@ -208,6 +235,29 @@ public class ActivityTrackerService extends Service implements Observer {
 	      // Send the notification.
 	      // mNM.notify(NOTIFICATION, notification);
 	      startForeground(1337, notification);
+	}
+	
+	private void writeToFile(Long ts) {
+		Vector<JSONObject> fixVector2 = fixVector;
+		fixVector = new Vector<JSONObject>();
+
+        if (fixVector2.size() > 0) {
+            try {
+        			tracker_file = new File(dir, ts+".txt");
+                	FileWriter filewriter = new FileWriter(tracker_file);
+                	BufferedWriter out = new BufferedWriter(filewriter);
+                    for (int i=0; i<fixVector2.size(); i++) {
+                        out.write(fixVector2.get(i) + "\n");
+                    }
+                    out.flush();
+                    out.close();
+	                    
+	            } catch (IOException e) {
+	                Log.e("TAG", "Could not write file " + e.getMessage());
+	            }
+         } 
+        running = true;
+
 	}
 	
 }

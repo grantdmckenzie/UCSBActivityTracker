@@ -41,6 +41,10 @@
 					$query = "INSERT INTO coordinates VALUES ('','".$deviceid."', ".$d[$i]->lat .",". $d[$i]->lng .",". $d[$i]->speed .",". $d[$i]->accuracy.",". $d[$i]->altitude.",". $d[$i]->ts.");";
 					mysql_query($query) or die(mysql_error());
 					break;
+				case 4:
+					$query = "INSERT INTO network VALUES ('','".$deviceid."', ".$d[$i]->lat .",". $d[$i]->lng .",". $d[$i]->speed .",". $d[$i]->accuracy.",". $d[$i]->altitude.",". $d[$i]->ts.");";
+					mysql_query($query) or die(mysql_error());
+					break;
 				default:
 			}
 			// echo $query . "<br/>";
