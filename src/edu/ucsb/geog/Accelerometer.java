@@ -47,24 +47,25 @@ public class Accelerometer extends Observable implements SensorEventListener, Ru
 		accely = event.values[1];
 		accelz = event.values[2];	
 		timestamp = new Long(System.currentTimeMillis()/1000);
-		
 		try 
 		{
-			fix.put("sensor", 1.0);
-			fix.put("accelx", accelx);
-			fix.put("accely", accely);
-			fix.put("accelz", accelz);
-			fix.put("ts", timestamp);
+			if(fix.length()>0 && (accelx!=fix.getDouble("accelx")||accely!=fix.getDouble("accely")&&accelz!=fix.getDouble("accelz")) || fix.length()==0)
+			{
+				fix = new JSONObject();
+				fix.put("sensor", 1.0);
+				fix.put("accelx", accelx);
+				fix.put("accely", accely);
+				fix.put("accelz", accelz);
+				fix.put("ts", timestamp);
+				setChanged();
+				notifyObservers(fix);
+			}
 		} 
 		catch (JSONException e) 
 		{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}	
-		
-		setChanged();
-		notifyObservers(fix);
-		
 		mSensorManager.unregisterListener(this);
 		
 	}
