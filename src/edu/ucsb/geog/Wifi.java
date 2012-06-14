@@ -16,7 +16,6 @@ public class Wifi extends Observable implements Runnable {
 	private JSONObject fix = new JSONObject();
 	private long interval;
 	private long timestamp;
-	private int count;
 	private boolean running = true;
 	
     public Wifi(WifiManager wifi) {

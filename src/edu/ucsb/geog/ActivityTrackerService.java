@@ -1,6 +1,7 @@
 package edu.ucsb.geog;
 
 import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -12,12 +13,14 @@ import java.util.UUID;
 import java.util.Vector;
 
 import org.apache.http.NameValuePair;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.ByteArrayBuffer;
 import org.json.JSONObject;
 
 import android.app.Notification;
@@ -179,6 +182,7 @@ public class ActivityTrackerService extends Service implements Observer {
 		} 
 		else if (observable instanceof Wifi){
 			fix = wifi.getFix();
+			Log.v("TAG", fix.toString());
 		}
 		else if (observable instanceof NetworkCoords){
 			fix = networkcoords.getFix();
@@ -241,23 +245,34 @@ public class ActivityTrackerService extends Service implements Observer {
 		Vector<JSONObject> fixVector2 = fixVector;
 		fixVector = new Vector<JSONObject>();
 
-        if (fixVector2.size() > 0) {
-            try {
-        			tracker_file = new File(dir, ts+".txt");
-                	FileWriter filewriter = new FileWriter(tracker_file);
-                	BufferedWriter out = new BufferedWriter(filewriter);
-                    for (int i=0; i<fixVector2.size(); i++) {
-                        out.write(fixVector2.get(i) + "\n");
-                    }
-                    out.flush();
-                    out.close();
-	                    
-	            } catch (IOException e) {
-	                Log.e("TAG", "Could not write file " + e.getMessage());
-	            }
-         } 
-        running = true;
+		File logFile = new File("sdcard/ucsbactivitytracker.log");
+	   if (!logFile.exists())
+	   {
+	      try
+	      {
+	         logFile.createNewFile();
+	      } 
+	      catch (IOException e)
+	      {
+	         // TODO Auto-generated catch block
+	         e.printStackTrace();
+	      }
+	   }
+	   if (fixVector2.size() > 0) {
+           try {
+	    	   BufferedWriter buf = new BufferedWriter(new FileWriter(logFile, true)); 
+	           for (int i=0; i<fixVector2.size(); i++) {
+	                   buf.append(fixVector2.get(i).toString());
+	                   buf.newLine();
+	           }
+	 	       buf.close();
+                    
+            } catch (IOException e) {
+                Log.e("TAG", "Could not write file " + e.getMessage());
+            }
+           running = true;
 
+	   }
 	}
-	
+
 }
