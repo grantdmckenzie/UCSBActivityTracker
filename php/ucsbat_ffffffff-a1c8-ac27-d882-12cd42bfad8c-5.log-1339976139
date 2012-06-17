@@ -1,0 +1,8 @@
+{"38:60:77:c1:e5:49":{"Signal":-55,"SSID":"8F8A81","Capabilities":"[WPA-PSK-TKIP+CCMP][WPA2-PSK-TKIP+CCMP]","Frequency":2437},"ts":1339976096,"sensor":2}
+{"sensor":1,"ts":1339976096,"accelx":0.4222307801246643,"accely":8.730643272399902,"accelz":3.827317714691162}
+{"sensor":4,"lng":-123.121323,"ts":1339976098,"speed":0,"accuracy":37,"altitude":0,"lat":49.1190332}
+{"sensor":1,"ts":1339976101,"accelx":-0.5311935544013977,"accely":6.442424297332764,"accelz":6.6603498458862305}
+{"sensor":1,"ts":1339976106,"accelx":-0.3813697397708893,"accely":6.701210975646973,"accelz":6.40156364440918}
+{"38:60:77:c1:e5:49":{"Signal":-62,"SSID":"8F8A81","Capabilities":"[WPA-PSK-TKIP+CCMP][WPA2-PSK-TKIP+CCMP]","Frequency":2437},"ts":1339976106,"sensor":2}
+{"sensor":3,"lng":-123.12122744,"ts":1339976106,"speed":0,"accuracy":20,"altitude":-3.799999952316284,"lat":49.11923817}
+{"sensor":1,"ts":1339976111,"accelx":0.5311935544013977,"accely":7.164302825927734,"accelz":6.592248439788818}

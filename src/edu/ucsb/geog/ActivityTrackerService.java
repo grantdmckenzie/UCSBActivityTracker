@@ -3,6 +3,7 @@ package edu.ucsb.geog;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -12,11 +13,13 @@ import java.util.Observer;
 import java.util.UUID;
 import java.util.Vector;
 
+import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
@@ -30,6 +33,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.hardware.SensorManager;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
@@ -37,6 +41,7 @@ import android.net.wifi.WifiManager;
 import android.os.Environment;
 import android.os.IBinder;
 import android.os.Looper;
+import android.preference.PreferenceManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.Toast;
@@ -64,8 +69,9 @@ public class ActivityTrackerService extends Service implements Observer {
 	private ConnectivityManager connectivity;
     private String deviceId;
     private NotificationManager mNM;
-	private File dir = null;
-	private File tracker_file = null;
+    private SharedPreferences settings;
+	private int filenum;
+	private static final String PREFERENCE_NAME = "ucsbprefs";
     
 	private int NOTIFICATION = R.string.local_service_started;
 	
@@ -75,10 +81,11 @@ public class ActivityTrackerService extends Service implements Observer {
 		mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
 		showNotification();
 		
+		
+		
 		fixVector = new Vector<JSONObject>();
-		File root = Environment.getExternalStorageDirectory();
-        File dir = new File(root, "./ucsbactivitytracker/");
-        dir.mkdir();
+		
+		
 		
 		// For defining unique device id
 		tm = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
@@ -174,15 +181,13 @@ public class ActivityTrackerService extends Service implements Observer {
 
 		if(observable instanceof Accelerometer)
 		{		
-			fix = accelerometer.getFix();  
+			fix = accelerometer.getFix();
 		}	
 		else if(observable instanceof Coordinates) {
 			fix = coordinate.getFix();
-			// Log.v("Coordinates", "Coordinates");
 		} 
 		else if (observable instanceof Wifi){
 			fix = wifi.getFix();
-			Log.v("TAG", fix.toString());
 		}
 		else if (observable instanceof NetworkCoords){
 			fix = networkcoords.getFix();
@@ -244,17 +249,15 @@ public class ActivityTrackerService extends Service implements Observer {
 	private void writeToFile(Long ts) {
 		Vector<JSONObject> fixVector2 = fixVector;
 		fixVector = new Vector<JSONObject>();
-
-		File logFile = new File("sdcard/ucsbactivitytracker.log");
-	   if (!logFile.exists())
-	   {
-	      try
-	      {
+		SharedPreferences settings = getSharedPreferences(PREFERENCE_NAME, MODE_PRIVATE);
+		filenum = settings.getInt("ucsb_filenum", 0);
+		File logFile = new File("sdcard/ucsbat_"+deviceId+"-"+filenum+".log");
+		Log.v("Path to file", "Path to file (service): "+logFile);
+	   if (!logFile.exists()) {
+	      try {
 	         logFile.createNewFile();
 	      } 
-	      catch (IOException e)
-	      {
-	         // TODO Auto-generated catch block
+	      catch (IOException e) {
 	         e.printStackTrace();
 	      }
 	   }
@@ -265,13 +268,11 @@ public class ActivityTrackerService extends Service implements Observer {
 	                   buf.append(fixVector2.get(i).toString());
 	                   buf.newLine();
 	           }
-	 	       buf.close();
-                    
+	 	       buf.close();    
             } catch (IOException e) {
                 Log.e("TAG", "Could not write file " + e.getMessage());
             }
            running = true;
-
 	   }
 	}
 
