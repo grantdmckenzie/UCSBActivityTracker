@@ -6,6 +6,7 @@
  */
 
 package edu.ucsb.geog;
+
 import java.util.Observable;
 
 import org.json.JSONException;
@@ -28,35 +29,32 @@ public class Coordinates extends Observable implements Runnable, Fix {
 	private JSONObject fix;
 	private LocationManager locationManager;
 	private LocationListener locationListener;
-	private boolean running = true;
-	
+	private boolean running = false;
+
 	public Coordinates(LocationManager locationManager) {
-		
+
 		this.locationManager = locationManager;
 		this.locationListener = new MyLocationListener();
 		prevlat = 0;
 		prevlng = 0;
 	}
-	
-	public void startRecording()
-	{
+
+	public void startRecording() {
 		locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
 		running = true;
 	}
-	
-	public void stopRecording()
-	{
+
+	public void stopRecording() {
 		locationManager.removeUpdates(locationListener);
 		running = false;
 	}
 
-	
 	public class MyLocationListener implements LocationListener {
-		
+
 		@Override
 		public void onLocationChanged(Location loc) {
-			
-			Long l = new Long(System.currentTimeMillis()/1000);
+
+			Long l = new Long(System.currentTimeMillis() / 1000);
 			timestamp = l.doubleValue();
 			latitude = loc.getLatitude();
 			longitude = loc.getLongitude();
@@ -65,58 +63,58 @@ public class Coordinates extends Observable implements Runnable, Fix {
 			altitude = loc.getAltitude();
 
 			// When the location changes, add the new location to the fix object
-			
+
 			try {
-				fix =  new JSONObject();
+				fix = new JSONObject();
 				fix.put("sensor", 3.0);
 				fix.put("lat", latitude);
 				fix.put("lng", longitude);
 				fix.put("ts", timestamp);
 				fix.put("accuracy", accuracy);
 				fix.put("speed", speed);
-				fix.put("altitude",altitude);
-				
+				fix.put("altitude", altitude);
+
 			} catch (JSONException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			
+
 		}
-	
+
 		@Override
 		public void onProviderDisabled(String provider) {
-			// Toast.makeText( getApplicationContext(),"Gps Disabled",Toast.LENGTH_SHORT ).show();
+			// Toast.makeText(
+			// getApplicationContext(),"Gps Disabled",Toast.LENGTH_SHORT
+			// ).show();
 		}
-	
+
 		@Override
 		public void onProviderEnabled(String provider) {
-			// Toast.makeText( getApplicationContext(),"Gps Enabled",Toast.LENGTH_SHORT).show();
+			// Toast.makeText(
+			// getApplicationContext(),"Gps Enabled",Toast.LENGTH_SHORT).show();
 		}
-	
+
 		@Override
 		public void onStatusChanged(String provider, int status, Bundle extras) {
-			// Toast.makeText( getApplicationContext(),"Location Service changed to "+provider,Toast.LENGTH_SHORT).show();
+			// Toast.makeText(
+			// getApplicationContext(),"Location Service changed to "+provider,Toast.LENGTH_SHORT).show();
 		}
 	}
-	
+
 	@Override
 	public void run() {
-		while(running)
-		{		
+		while (running) {
 			// after 60 seconds, send the fix back to the observer
-			if (fix != null && latitude != prevlat && longitude != prevlng) {
-				setChanged();
+			if (fix != null) //&& latitude != prevlat && longitude != prevlng) {
+			{	setChanged();
 				notifyObservers(fix);
-				try 
-				{
+				try {
 					prevlat = latitude;
 					prevlng = longitude;
-					Thread.sleep(30000);  
-				} 
-				catch (InterruptedException ex) 
-				{
-					// nothing to see here.  Move along.
-				}			
+					Thread.sleep(60000);
+				} catch (InterruptedException ex) {
+					// nothing to see here. Move along.
+				}
 			} else {
 				// Log.v("Coordinates", "Coordinates are null");
 			}

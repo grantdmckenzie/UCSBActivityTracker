@@ -5,4 +5,6 @@
     <string name="app_name">UCSBActivityTracker</string>
     <string name="local_service_started">Select to return to UCSBActivityTracker.</string>
     <string name="local_service_label">UCSBActivityTracker is ON</string>
+    <string name="caliberation_started">Caliberation is started.</string>
+    <string name="accel_started">Accelerometer is recording.</string>
 </resources>

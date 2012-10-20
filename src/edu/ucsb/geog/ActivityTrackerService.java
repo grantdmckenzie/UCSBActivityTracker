@@ -12,6 +12,7 @@ import java.util.Observable;
 import java.util.Observer;
 import java.util.UUID;
 import java.util.Vector;
+import java.util.jar.JarEntry;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -63,7 +64,7 @@ public class ActivityTrackerService extends Service implements Observer {
 	private Thread coordthread;
 	private Thread vectorthread;
 	private Thread networkthread;
-	private boolean running = true;
+	private boolean running = false;
 	private String URL = "http://geogrant.com/UCSB/ucsbactivitytracker/insert.php";
 	private TelephonyManager tm;
 	private ConnectivityManager connectivity;
@@ -80,13 +81,9 @@ public class ActivityTrackerService extends Service implements Observer {
 		
 		mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
 		showNotification();
-		
-		
-		
+			
 		fixVector = new Vector<JSONObject>();
-		
-		
-		
+			
 		// For defining unique device id
 		tm = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
 		connectivity = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -99,7 +96,7 @@ public class ActivityTrackerService extends Service implements Observer {
 
 		// Accelerometer
 		mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-		accelerometer = new Accelerometer(mSensorManager, 5000); // the rate for accelerometer is 5 sec
+		accelerometer = new Accelerometer(mSensorManager, 30000); 
 		accelerometer.addObserver(this);
 		accelThread = new Thread(accelerometer);
 
@@ -117,7 +114,7 @@ public class ActivityTrackerService extends Service implements Observer {
 		
 		// Wi-Fi
 		wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
-        wifi = new Wifi(wifiManager, 10000);
+        wifi = new Wifi(wifiManager, 60000);
         // IntentFilter filter = new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION);
         wifi.addObserver(this);   
         wifithread = new Thread(wifi);
@@ -126,17 +123,32 @@ public class ActivityTrackerService extends Service implements Observer {
         vectorthread = new Thread() {
 		    @Override
 		    public void run() {
-		    	Looper.prepare();
-		    	while(running) {
-					if(fixVector.size() == 8) {
-				        Log.v("Size match", fixVector.size()+"");
-				        running = false;
+		    	//Looper.prepare();
+		    	while(running) 
+		    	{
+					//if(fixVector.size() == 8) 
+					//{
+				        //Log.v("Size match", fixVector.size()+"");
+				        //running = false;
 				        // serializeFixVector();
-				        Long ts = new Long(System.currentTimeMillis()/1000);
-				        writeToFile(ts);
-				    }
+		    		
+		    		try
+					{
+						Thread.sleep(40000);					
+					} 
+					catch (Exception e) 
+					{
+						// TODO: handle exception
+					}
+		    		
+		    		
+				    Long ts = new Long(System.currentTimeMillis()/1000);
+				    writeToFile();
+				    //}
+					
+					
 				}
-		    	Looper.loop();
+		    	//Looper.loop();
 		    }
 		};
 		
@@ -144,28 +156,36 @@ public class ActivityTrackerService extends Service implements Observer {
 	
 	@Override
 	public void onStart(Intent intent, int startid) {
+		accelerometer.startRecording();
 		accelThread.start();
-		wifithread.start();
-		wifi.startRecording();
-		coordinate.startRecording();
-		coordthread.start();
-		networkcoords.startRecording();
-		networkthread.start();
-		vectorthread.start();
+		
+		//wifi.startRecording();
+		//wifithread.start();
+			
+		//coordinate.startRecording();
+		//coordthread.start();
+		
+		//networkcoords.startRecording();
+		//networkthread.start();
+		//this.running = true;
+		//vectorthread.start();
 	}
 	
 	@Override
 	public void onDestroy() {
 		// mNM.cancel(NOTIFICATION);
-		accelerometer.running = false;
+		accelerometer.stopRecording();
 		accelThread = null;
-		wifithread = null;
-		wifi.stopRecording();
-		coordinate.stopRecording();
-		coordthread = null;
-		vectorthread = null;
-		networkcoords.stopRecording();
-		networkthread = null;
+		
+		//wifi.stopRecording();
+		//wifithread = null;
+		
+		//coordinate.stopRecording();
+		//coordthread = null;		
+		//this.running = false;
+		//vectorthread = null;
+		//networkcoords.stopRecording();
+		//networkthread = null;
 	}
 	
 	@Override
@@ -175,13 +195,40 @@ public class ActivityTrackerService extends Service implements Observer {
 	}
 
 	@Override
-	public void update(Observable observable, Object data) {
+	public void update(Observable observable, Object data) 
+	{
 		// use fix to handle the data from all sensors
-		fix  = new JSONObject();
+		//fix  = new JSONObject();
+		if(data instanceof java.util.Vector){
+			fixVector = (Vector<JSONObject>)data;
+			writeToFile();
+		}
+		else
+			fix = (JSONObject)data;
+//		if(observable instanceof Coordinates) 
+//		{
+//			try 
+//			{
+//				Log.v("Coordinates", fix.getString("sensor"));
+//				
+//			} catch (Exception e) {
+//				// TODO: handle exception
+//			}
+//			
+//		} 
 
-		if(observable instanceof Accelerometer)
+		/*if(observable instanceof Accelerometer)
 		{		
-			fix = accelerometer.getFix();
+			fix = (JSONObject)data;
+//			try 
+//			{
+//				Log.v("acceleration", fix.getDouble("accelx")+";"+fix.getDouble("accely")+";"+fix.getDouble("accelz"));
+//			} 
+//			catch (Exception e) 
+//			{
+//				// TODO: handle exception
+//			}
+			
 		}	
 		else if(observable instanceof Coordinates) {
 			fix = coordinate.getFix();
@@ -191,11 +238,15 @@ public class ActivityTrackerService extends Service implements Observer {
 		}
 		else if (observable instanceof NetworkCoords){
 			fix = networkcoords.getFix();
-		}
+		}*/
 		
 		// Add the fix to the vector
 		fixVector.add(fix);
-		Log.v("Vector Size", "Vector Size: "+fixVector.size());
+		int size = fixVector.size();
+		
+		Log.v("Vector Size", "Vector Size: "+ size);
+		
+		if(size == 15) writeToFile();
 	}
 	
 	private void serializeFixVector() {
@@ -246,14 +297,15 @@ public class ActivityTrackerService extends Service implements Observer {
 	      startForeground(1337, notification);
 	}
 	
-	private void writeToFile(Long ts) {
+	private void writeToFile() {
 		Vector<JSONObject> fixVector2 = fixVector;
 		fixVector = new Vector<JSONObject>();
-		SharedPreferences settings = getSharedPreferences(PREFERENCE_NAME, MODE_PRIVATE);
+		SharedPreferences settings = getSharedPreferences(PREFERENCE_NAME, MODE_WORLD_READABLE);
 		filenum = settings.getInt("ucsb_filenum", 0);
 		File logFile = new File("sdcard/ucsbat_"+deviceId+"-"+filenum+".log");
 		Log.v("Path to file", "Path to file (service): "+logFile);
-	   if (!logFile.exists()) {
+	   if (!logFile.exists()) 
+	   {
 	      try {
 	         logFile.createNewFile();
 	      } 
@@ -262,17 +314,21 @@ public class ActivityTrackerService extends Service implements Observer {
 	      }
 	   }
 	   if (fixVector2.size() > 0) {
-           try {
+           try 
+           {
 	    	   BufferedWriter buf = new BufferedWriter(new FileWriter(logFile, true)); 
 	           for (int i=0; i<fixVector2.size(); i++) {
 	                   buf.append(fixVector2.get(i).toString());
+	                   //Log.v("logs", fixVector2.get(i).toString());
 	                   buf.newLine();
 	           }
 	 	       buf.close();    
-            } catch (IOException e) {
+            } 
+           catch (IOException e) 
+           {
                 Log.e("TAG", "Could not write file " + e.getMessage());
             }
-           running = true;
+           //running = true;
 	   }
 	}
 

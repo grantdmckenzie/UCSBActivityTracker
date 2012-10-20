@@ -15,6 +15,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.Looper;
 
 public class NetworkCoords extends Observable implements Runnable, Fix {
 	private double latitude;
@@ -28,7 +29,7 @@ public class NetworkCoords extends Observable implements Runnable, Fix {
 	private JSONObject fix;
 	private LocationManager locationManager;
 	private LocationListener locationListener;
-	private boolean running = true;
+	private boolean running = false;
 	
 	public NetworkCoords(LocationManager locationManager) {
 		
@@ -101,10 +102,11 @@ public class NetworkCoords extends Observable implements Runnable, Fix {
 	
 	@Override
 	public void run() {
+		
 		while(running)
-		{		
+		{				
 			// after 60 seconds, send the fix back to the observer
-			if (fix != null && latitude != prevlat && longitude != prevlng) {
+			if (fix != null){ //&& latitude != prevlat && longitude != prevlng) {
 				setChanged();
 				notifyObservers(fix);
 				try 

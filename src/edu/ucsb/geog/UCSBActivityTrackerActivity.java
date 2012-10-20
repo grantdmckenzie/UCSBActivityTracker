@@ -23,22 +23,29 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.hardware.SensorManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Looper;
+import android.os.SystemClock;
 import android.preference.PreferenceManager;
+import android.provider.Settings.System;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.TextView;
 
 public class UCSBActivityTrackerActivity extends Activity implements OnClickListener {
 
 	private Button buttonDoSomething;
 	private Button buttonSendData;
+	private Button buttonCalibrate;
+	private TextView textCaliberation;
 	private SharedPreferences settings;
 	private boolean trackeron;
 	private int filenum;
@@ -48,6 +55,9 @@ public class UCSBActivityTrackerActivity extends Activity implements OnClickList
 	private String deviceId;
 	private static final String PREFERENCE_NAME = "ucsbprefs";
 	
+	private SensorManager mSensorManager;
+	private AccelCalibration accelCalibrater = null;
+	
 	/** Called when the activity is first created. */
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
@@ -55,7 +65,7 @@ public class UCSBActivityTrackerActivity extends Activity implements OnClickList
 		// initiate GUI
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
-		settings = getSharedPreferences(PREFERENCE_NAME, MODE_PRIVATE);
+		settings = getSharedPreferences(PREFERENCE_NAME, MODE_WORLD_READABLE);
 		
 		// For defining unique device id
 		tm = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
@@ -76,7 +86,13 @@ public class UCSBActivityTrackerActivity extends Activity implements OnClickList
 		buttonSendData = (Button) findViewById(R.id.btn2);
 		buttonSendData.setOnClickListener(this);
 		
-		serviceIntent = new Intent(this, ActivityTrackerService.class);
+		buttonCalibrate = (Button) findViewById(R.id.btn3);
+		buttonCalibrate.setOnClickListener(this);
+		
+		textCaliberation = (TextView)findViewById(R.id.text);
+		
+		//serviceIntent = new Intent(this, ActivityTrackerService.class);
+		serviceIntent = new Intent(this, AccelService.class);
 	    
 	    if (trackeron) {
 	    	buttonDoSomething.setText("Turn Tracker OFF");
@@ -84,9 +100,18 @@ public class UCSBActivityTrackerActivity extends Activity implements OnClickList
 	    	buttonDoSomething.setText("Turn Tracker ON");
 	    }
 		
+	    //loop();
 	}
 	
-	 @Override
+	 private void loop() {
+//		while(true)
+//		{
+//			SystemClock.currentThreadTimeMillis()
+//		}
+		
+	}
+
+	@Override
 	  protected void onPause() {
 	      super.onPause();
 	      saveState();
@@ -102,7 +127,7 @@ public class UCSBActivityTrackerActivity extends Activity implements OnClickList
 	    settings = PreferenceManager.getDefaultSharedPreferences(this);
 	  }
 	  private void saveState() {
-		  SharedPreferences preferences = getPreferences(MODE_PRIVATE);
+		  SharedPreferences preferences = getSharedPreferences(PREFERENCE_NAME, MODE_WORLD_READABLE);
 		  SharedPreferences.Editor editor = preferences.edit(); 
 		  editor.putBoolean("ucsb_tracker", trackeron);
 		  editor.commit();
@@ -110,7 +135,7 @@ public class UCSBActivityTrackerActivity extends Activity implements OnClickList
 
 	@Override
 	public void onClick(View src) {
-		  SharedPreferences preferences = getPreferences(MODE_PRIVATE);
+		  SharedPreferences preferences = getSharedPreferences(PREFERENCE_NAME, MODE_WORLD_READABLE);
 		  SharedPreferences.Editor editor = preferences.edit(); 
 		  if (src.getId() == R.id.btn1) {
 			  buttonDoSomething.setEnabled(false);
@@ -130,6 +155,27 @@ public class UCSBActivityTrackerActivity extends Activity implements OnClickList
 			  buttonSendData.setEnabled(false);
 			  new DownloadDataTask().execute();
 		  }
+		  else if(src.getId() == R.id.btn3)
+		  {
+			  if (buttonCalibrate.getText().equals("Start calibrate"))
+			  {
+				  if(accelCalibrater ==  null)
+				  {
+					  mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+					  accelCalibrater = new AccelCalibration(mSensorManager, textCaliberation, buttonCalibrate);	  
+				  }
+				  
+				  accelCalibrater.startCaliberation();				  
+				  buttonCalibrate.setText("Calibrating...");
+				  buttonCalibrate.setEnabled(false);
+				
+			  }
+			  else 
+			  {
+				  accelCalibrater.stopCaliberation();
+				  buttonCalibrate.setText("Start calibrate");
+			  }
+		  }
 	}
 	
 	private class DownloadDataTask extends AsyncTask<String, Void, String> {
@@ -140,7 +186,7 @@ public class UCSBActivityTrackerActivity extends Activity implements OnClickList
 	    	 this.dialog.setMessage("Uploading Log File...");
 	         this.dialog.show();
 	         // Start writing to new file
-	         SharedPreferences settings = getSharedPreferences(PREFERENCE_NAME, MODE_PRIVATE);
+	         SharedPreferences settings = getSharedPreferences(PREFERENCE_NAME, MODE_WORLD_READABLE);
  		     SharedPreferences.Editor editor = settings.edit(); 
  		     filenum++;
  		     editor.putInt("ucsb_filenum", filenum);
@@ -242,6 +288,7 @@ public class UCSBActivityTrackerActivity extends Activity implements OnClickList
 			}
 			catch (Exception ex)
 			{
+				Log.v("error", ex.getMessage());
 				return ex.getMessage();
 			//Exception handling
 			}
