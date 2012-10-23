@@ -35,6 +35,8 @@ public class AccelCalibration implements SensorEventListener
 	private Button calibrationButton;
 	private boolean firstFlag = false;
 	private int count = 0;
+	private BurstSD callibrationSD = null;
+	private double avgSD = 0;
 
 	public AccelCalibration(SensorManager mSensorManager, TextView textView, Button calibrationButton) 
 	{
@@ -56,6 +58,9 @@ public class AccelCalibration implements SensorEventListener
 			e.printStackTrace();
 		}
 		
+	}
+	public double getCallibrationSD() {
+		return this.avgSD;
 	}
 	
 	public void startCaliberation()
@@ -87,7 +92,7 @@ public class AccelCalibration implements SensorEventListener
 			accelz = event.values[2];	
 			timestamp = new Long(System.currentTimeMillis()/1000);
 			
-			this.textView.setText("x:"+accelx+", y:"+accely+", z:"+accelz);
+			this.textView.setText("x:"+accelx+"\ny:"+accely+"\nz:"+accelz);
 			
 			fix = new JSONObject();
 			fix.put("sensor", 1.0);
@@ -99,20 +104,25 @@ public class AccelCalibration implements SensorEventListener
 			fixVector.add(fix);
 			int size = fixVector.size();
 			
-			Log.v("Vector Size", "Vector Size: "+ size);
+			// Log.v("Vector Size", "Vector Size: "+ size);
 		
 			if(size == 60)
 			{
 				if(firstFlag == true)
 				{
+					this.callibrationSD = new BurstSD(fixVector);
+					this.avgSD += this.callibrationSD.getSD();
+					
 					writeToFile();
 					count++;
-					if(count == 20)
+					if(count == 2)
 					{
+						this.avgSD = this.avgSD / count;
+						Log.v("Standard Deviation", ""+this.avgSD);
 						this.mSensorManager.unregisterListener(this);
 						this.calibrationButton.setEnabled(true);
 						this.calibrationButton.setText("Start calibrate");
-						this.textView.setText("Calibration has completed.");
+						this.textView.setText("Calibration complete");
 					}
 				}
 				else
