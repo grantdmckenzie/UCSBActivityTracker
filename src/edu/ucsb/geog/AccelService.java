@@ -9,6 +9,7 @@ import java.util.TimerTask;
 import java.util.UUID;
 import java.util.Vector;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.app.Notification;
@@ -38,9 +39,11 @@ public class AccelService extends Service implements SensorEventListener
   private String deviceId;
   private TelephonyManager tm;
   private Timer timer;
-
- 
-  
+  private BurstSD burstSD;
+  private double standardDeviation;
+  private SharedPreferences appSharedPrefs;
+  private float calibrationSD;
+  private float sddif;
   
   public void onCreate() 
   {	 
@@ -57,6 +60,10 @@ public class AccelService extends Service implements SensorEventListener
 		mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 		mAccelerometer = mSensorManager.getSensorList(Sensor.TYPE_ACCELEROMETER).get(0);
 	    fixes = new Vector<JSONObject>();
+	    
+	    // Get Calibration SD from Shared Preferences
+	    this.appSharedPrefs = getSharedPreferences("edu.ucsb.geog", MODE_WORLD_READABLE);
+	    this.calibrationSD = appSharedPrefs.getFloat("callibrationSD", -99);
 	    
 	    //timer = new Timer();
 	        
@@ -112,13 +119,26 @@ public class AccelService extends Service implements SensorEventListener
 			
 		}
   		fixes.add(fix);
-  		Log.v("Vector Size", "Vector Size: "+ fixes.size());
+  		// Log.v("Vector Size", "Vector Size: "+ fixes.size());
   		
   		if(fixes.size()==50)
   		{
   			mSensorManager.unregisterListener(this);
   			
-  			writeToFile();
+  			// Calculate the Standard Deviation for the Burst
+  			this.burstSD = new BurstSD(fixes);
+			this.standardDeviation = this.burstSD.getSD();
+			this.sddif = (float) this.standardDeviation - this.calibrationSD;
+			// Log.v("Burst Standard Deviation", ""+ this.standardDeviation);
+			Log.v("SD Difference", ""+this.sddif);
+			// Log.v("CallibrationSD", ""+v);
+			
+  			try {
+				writeToFile();
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
   			
   			SystemClock.sleep(msInterval);
   			
@@ -153,7 +173,7 @@ public class AccelService extends Service implements SensorEventListener
 	     	     
 	}
 	
-	private void writeToFile() {
+	private void writeToFile() throws JSONException {
 		Vector<JSONObject> fixVector2 = fixes;
 		fixes = new Vector<JSONObject>();
 		SharedPreferences settings = getSharedPreferences(PREFERENCE_NAME, MODE_WORLD_READABLE);
@@ -173,11 +193,14 @@ public class AccelService extends Service implements SensorEventListener
            try 
            {
 	    	   BufferedWriter buf = new BufferedWriter(new FileWriter(logFile, true)); 
-	           for (int i=0; i<fixVector2.size(); i++) {
-	                   buf.append(fixVector2.get(i).toString());
+	           /* for (int i=0; i<fixVector2.size(); i++) {
+	        	   
+	                   buf.append(fixVector2.get(i).get("ts").toString().",");
 	                   //Log.v("logs", fixVector2.get(i).toString());
 	                   buf.newLine();
-	           }
+	           } */
+	           buf.append(fixVector2.get(0).getString("ts")+","+fixVector2.get(fixVector2.size()-1).getString("ts")+","+this.sddif);
+	           buf.newLine();
 	 	       buf.close();    
             } 
            catch (IOException e) 

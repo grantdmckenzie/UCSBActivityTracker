@@ -11,10 +11,12 @@ import org.json.JSONObject;
 import android.R.anim;
 import android.app.NotificationManager;
 import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.TextView;
@@ -22,7 +24,10 @@ import android.content.Context;
 
 public class AccelCalibration implements SensorEventListener
 {
-	
+	private static final String APP_SHARED_PREFS = "edu.ucsb.geog";
+    private SharedPreferences appSharedPrefs;
+    private Editor prefsEditor;
+    
 	private SensorManager mSensorManager;
 	private Sensor mAccelerometer;
 	private Vector<JSONObject> fixVector;
@@ -32,17 +37,21 @@ public class AccelCalibration implements SensorEventListener
 	private double accelz = 0;
 	private long timestamp;
 	private TextView textView;
+	private TextView textViewSD;
 	private Button calibrationButton;
 	private boolean firstFlag = false;
 	private int count = 0;
 	private BurstSD callibrationSD = null;
 	private double avgSD = 0;
 
-	public AccelCalibration(SensorManager mSensorManager, TextView textView, Button calibrationButton) 
+	public AccelCalibration(SensorManager mSensorManager, TextView textView, TextView textViewSD, Button calibrationButton, Context context) 
 	{
-	
+		this.appSharedPrefs = context.getSharedPreferences(APP_SHARED_PREFS, UCSBActivityTrackerActivity.MODE_WORLD_READABLE);
+        this.prefsEditor = appSharedPrefs.edit();
+        
 		this.mSensorManager = mSensorManager;
 		this.textView = textView;
+		this.textViewSD = textViewSD;
 		this.calibrationButton = calibrationButton;
 		mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 		fixVector = new Vector<JSONObject>();
@@ -93,6 +102,7 @@ public class AccelCalibration implements SensorEventListener
 			timestamp = new Long(System.currentTimeMillis()/1000);
 			
 			this.textView.setText("x:"+accelx+"\ny:"+accely+"\nz:"+accelz);
+			this.textViewSD.setText("Calculating Standard Deviation...");
 			
 			fix = new JSONObject();
 			fix.put("sensor", 1.0);
@@ -105,23 +115,28 @@ public class AccelCalibration implements SensorEventListener
 			int size = fixVector.size();
 			
 			// Log.v("Vector Size", "Vector Size: "+ size);
-		
 			if(size == 60)
 			{
 				if(firstFlag == true)
 				{
+					// Create new BURSTSD object and calculate the Standard Deviation
 					this.callibrationSD = new BurstSD(fixVector);
 					this.avgSD += this.callibrationSD.getSD();
 					
 					writeToFile();
 					count++;
-					if(count == 2)
+					if(count == 1)
 					{
+						// Print Calibration SD to the output screen
+						// Store SD to shared preferences
 						this.avgSD = this.avgSD / count;
-						Log.v("Standard Deviation", ""+this.avgSD);
+						this.textViewSD.setText("Callibration SD: "+this.avgSD);
+						prefsEditor.putFloat("callibrationSD", (float) this.avgSD);
+				        prefsEditor.commit();
+				        
 						this.mSensorManager.unregisterListener(this);
 						this.calibrationButton.setEnabled(true);
-						this.calibrationButton.setText("Start calibrate");
+						this.calibrationButton.setText("Start Calibration");
 						this.textView.setText("Calibration complete");
 					}
 				}

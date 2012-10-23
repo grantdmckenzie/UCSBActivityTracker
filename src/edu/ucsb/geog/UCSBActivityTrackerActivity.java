@@ -46,6 +46,7 @@ public class UCSBActivityTrackerActivity extends Activity implements OnClickList
 	private Button buttonSendData;
 	private Button buttonCalibrate;
 	private TextView textCaliberation;
+	private TextView textCaliberationSD;
 	private SharedPreferences settings;
 	private boolean trackeron;
 	private int filenum;
@@ -90,6 +91,7 @@ public class UCSBActivityTrackerActivity extends Activity implements OnClickList
 		buttonCalibrate.setOnClickListener(this);
 		
 		textCaliberation = (TextView)findViewById(R.id.text);
+		textCaliberationSD = (TextView)findViewById(R.id.textCalSD);
 		
 		//serviceIntent = new Intent(this, ActivityTrackerService.class);
 		serviceIntent = new Intent(this, AccelService.class);
@@ -157,12 +159,12 @@ public class UCSBActivityTrackerActivity extends Activity implements OnClickList
 		  }
 		  else if(src.getId() == R.id.btn3)
 		  {
-			  if (buttonCalibrate.getText().equals("Start calibrate"))
+			  if (buttonCalibrate.getText().equals("Start Calibration"))
 			  {
 				  if(accelCalibrater ==  null)
 				  {
 					  mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-					  accelCalibrater = new AccelCalibration(mSensorManager, textCaliberation, buttonCalibrate);	  
+					  accelCalibrater = new AccelCalibration(mSensorManager, textCaliberation, textCaliberationSD, buttonCalibrate, getApplicationContext());	    
 				  }
 				  
 				  accelCalibrater.startCaliberation();				  
@@ -173,7 +175,7 @@ public class UCSBActivityTrackerActivity extends Activity implements OnClickList
 			  else 
 			  {
 				  accelCalibrater.stopCaliberation();
-				  buttonCalibrate.setText("Start calibrate");
+				  buttonCalibrate.setText("Start Calibration");
 			  }
 		  }
 	}
