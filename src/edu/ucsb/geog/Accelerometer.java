@@ -4,13 +4,16 @@ import java.util.List;
 import java.util.Observable;
 import java.util.Vector;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.SystemClock;
+import android.util.Log;
 
 public class Accelerometer extends Observable implements SensorEventListener, Runnable, Fix
 {
@@ -28,9 +31,15 @@ public class Accelerometer extends Observable implements SensorEventListener, Ru
 	
 	private long recordStartTime;
 	
+	private AccelService accelService;
+	private float calibrationSD;
+	private BurstSD burstSD;
+	private double standardDeviation;	  
+	private float sddif;
+	
 	
 
-	public Accelerometer(SensorManager mSensorManager, long msInterval) {
+	public Accelerometer(SensorManager mSensorManager, long msInterval, AccelService accelService, float calibrationSD) {
 					
 		this.mSensorManager = mSensorManager;
 		//mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
@@ -38,6 +47,9 @@ public class Accelerometer extends Observable implements SensorEventListener, Ru
 		mAccelerometer = mSensorManager.getSensorList(Sensor.TYPE_ACCELEROMETER).get(0);
 		fixes = new Vector<JSONObject>();
 		this.msInterval = msInterval;
+		this.accelService = accelService;
+		this.calibrationSD = calibrationSD;
+		
 		fix =  new JSONObject();
 		try
         {
@@ -80,7 +92,37 @@ public class Accelerometer extends Observable implements SensorEventListener, Ru
 				// TODO: handle exception
 			}
 		fixes.add(fix);
-		if(fixes.size()>=50){
+		
+		
+		if(fixes.size()==50)
+  		{
+  			mSensorManager.unregisterListener(this);
+  			
+  			// Calculate the Standard Deviation for the Burst
+  			this.burstSD = new BurstSD(fixes);
+			this.standardDeviation = this.burstSD.getSD();
+			this.sddif = (float) this.standardDeviation - this.calibrationSD;
+			// Log.v("Burst Standard Deviation", ""+ this.standardDeviation);
+			Log.v("SD Difference", ""+this.sddif);
+			// Log.v("CallibrationSD", ""+v);
+			Log.v("fix size1:", ""+fixes.size());
+			this.accelService.setFixes(fixes);
+  			try 
+  			{
+  				this.accelService.writeToFile();
+			} 
+  			catch (JSONException e) 
+  			{
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+  		}
+  			
+		
+		
+		
+		
+		/*if(fixes.size()>=50){
 			mSensorManager.unregisterListener(this);
 			setChanged();
 			notifyObservers(fixes);
@@ -89,7 +131,7 @@ public class Accelerometer extends Observable implements SensorEventListener, Ru
 			SystemClock.sleep(msInterval);
 			
 			mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);
-		}
+		}*/
 		
 			//Log.v("acceleration", fix.getDouble("accelx")+";"+fix.getDouble("accely")+";"+fix.getDouble("accelz"));		
 //			if((timestamp - recordStartTime)>=3)
@@ -159,4 +201,7 @@ public class Accelerometer extends Observable implements SensorEventListener, Ru
 	public JSONObject getFix() {
 		return fix;
 	}
+	
+	
+	
 }

@@ -84,7 +84,7 @@ public class AccelerAdvanced extends Service
 	public void onCreate() 
 	{
 		mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-		accelerometer = new Accelerometer(mSensorManager, 30000); 		
+		//accelerometer = new Accelerometer(mSensorManager, 30000); 		
 	}
 
 	@Override

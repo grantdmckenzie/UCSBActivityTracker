@@ -38,12 +38,19 @@ public class AccelService extends Service implements SensorEventListener
   private int filenum;
   private String deviceId;
   private TelephonyManager tm;
-  private Timer timer;
+  private Timer acclTimer;
   private BurstSD burstSD;
   private double standardDeviation;
   private SharedPreferences appSharedPrefs;
   private float calibrationSD;
   private float sddif;
+  
+  
+  public void setFixes(Vector<JSONObject> fixes) 
+  {
+	this.fixes = fixes;
+  }
+  
   
   public void onCreate() 
   {	 
@@ -71,8 +78,22 @@ public class AccelService extends Service implements SensorEventListener
   
   public int onStartCommand(Intent intent, int flags, int startId) 
   {	 
-	 mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);	
+	 //mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);	
 	 
+	  acclTimer = new Timer();
+      TimerTask doThis;
+
+      int delay = 0;   // delay for 0 sec.
+      int period = 60000;  // repeat every 60 sec.
+      doThis = new TimerTask() {
+        public void run() {
+        	Accelerometer accelerometer = new Accelerometer(mSensorManager, 30000, AccelService.this, calibrationSD); 		
+    		Thread accelThread = new Thread(accelerometer);
+    		accelThread.start();
+        }
+      };
+      acclTimer.schedule(doThis, delay, period);
+	  
 	 return START_STICKY;
   }
   
@@ -83,7 +104,7 @@ public class AccelService extends Service implements SensorEventListener
   public void onDestroy() 
   {
 	  mSensorManager.unregisterListener(this);
-	  timer.cancel();
+	  acclTimer.cancel();
 	  stopForeground(true); 
 	  
 	  
@@ -173,8 +194,9 @@ public class AccelService extends Service implements SensorEventListener
 	     	     
 	}
 	
-	private void writeToFile() throws JSONException {
+	public void writeToFile() throws JSONException {
 		Vector<JSONObject> fixVector2 = fixes;
+		Log.v("vector size", "size: "+fixVector2.size());
 		fixes = new Vector<JSONObject>();
 		SharedPreferences settings = getSharedPreferences(PREFERENCE_NAME, MODE_WORLD_READABLE);
 		filenum = settings.getInt("ucsb_filenum", 0);
@@ -199,9 +221,17 @@ public class AccelService extends Service implements SensorEventListener
 	                   //Log.v("logs", fixVector2.get(i).toString());
 	                   buf.newLine();
 	           } */
-	           buf.append(fixVector2.get(0).getString("ts")+","+fixVector2.get(fixVector2.size()-1).getString("ts")+","+this.sddif);
-	           buf.newLine();
-	 	       buf.close();    
+//	           buf.append(fixVector2.get(0).getString("ts")+","+fixVector2.get(fixVector2.size()-1).getString("ts")+","+this.sddif);
+//	           Log.v("ts", fixVector2.get(0).getString("ts"));
+//	           buf.newLine();
+//	 	       buf.close();  
+	 	       
+	 	      for (int i=0; i<fixVector2.size(); i++) {
+                  buf.append(fixVector2.get(i).toString());
+                  //Log.v("logs", fixVector2.get(i).toString());
+                  buf.newLine();
+	 	      	}
+	 	      buf.close(); 
             } 
            catch (IOException e) 
            {

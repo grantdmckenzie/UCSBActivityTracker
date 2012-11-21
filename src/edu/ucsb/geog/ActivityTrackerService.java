@@ -96,9 +96,9 @@ public class ActivityTrackerService extends Service implements Observer {
 
 		// Accelerometer
 		mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-		accelerometer = new Accelerometer(mSensorManager, 30000); 
-		accelerometer.addObserver(this);
-		accelThread = new Thread(accelerometer);
+		//accelerometer = new Accelerometer(mSensorManager, 30000); 
+		//accelerometer.addObserver(this);
+		//accelThread = new Thread(accelerometer);
 
 		// Coordinates (GPS)
 		locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
