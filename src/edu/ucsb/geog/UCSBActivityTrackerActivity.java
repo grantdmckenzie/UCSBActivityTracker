@@ -17,7 +17,9 @@ import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 
 import android.app.Activity;
+import android.app.AlarmManager;
 import android.app.AlertDialog;
+import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -30,6 +32,8 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Looper;
+import android.os.PowerManager;
+import android.os.PowerManager.WakeLock;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.provider.Settings.System;
@@ -55,6 +59,9 @@ public class UCSBActivityTrackerActivity extends Activity implements OnClickList
 	private ConnectivityManager connectivity;
 	private String deviceId;
 	private static final String PREFERENCE_NAME = "ucsbprefs";
+	
+	private PowerManager powerManager; 
+    private WakeLock wakeLock; 
 	
 	private SensorManager mSensorManager;
 	private AccelCalibration accelCalibrater = null;
@@ -101,6 +108,9 @@ public class UCSBActivityTrackerActivity extends Activity implements OnClickList
 	    } else {
 	    	buttonDoSomething.setText("Turn Tracker ON");
 	    }
+	    
+	    powerManager = (PowerManager)getSystemService(Context.POWER_SERVICE);
+
 		
 	    //loop();
 	}
@@ -142,6 +152,13 @@ public class UCSBActivityTrackerActivity extends Activity implements OnClickList
 		  if (src.getId() == R.id.btn1) {
 			  buttonDoSomething.setEnabled(false);
 			  if (!trackeron) {
+				  	
+//				Intent thisIntent = new Intent(getApplicationContext(), AlarmReceiver.class);
+//				PendingIntent recurringIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, thisIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+//				AlarmManager alarms = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+//				alarms.setInexactRepeating(AlarmManager.RTC_WAKEUP, SystemClock.elapsedRealtime(),
+//				            60000, recurringIntent);
+				  			  
 				  	startService(serviceIntent);
 					trackeron = true;
 					buttonDoSomething.setText("Turn Tracker OFF");
@@ -149,6 +166,7 @@ public class UCSBActivityTrackerActivity extends Activity implements OnClickList
 				    stopService(serviceIntent);
 					trackeron = false;
 					buttonDoSomething.setText("Turn Tracker ON");
+					
 			  }
 			  buttonDoSomething.setEnabled(true);
 			  editor.putBoolean("ucsb_tracker", trackeron);
