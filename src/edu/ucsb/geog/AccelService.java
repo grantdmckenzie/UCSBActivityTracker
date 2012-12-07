@@ -1,18 +1,5 @@
 package edu.ucsb.geog;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.UUID;
-import java.util.Vector;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import android.R.bool;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -20,129 +7,41 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
-import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
-import android.os.PowerManager.WakeLock;
-import android.os.SystemClock;
-import android.telephony.TelephonyManager;
 import android.util.Log;
 
-public class AccelService extends Service implements SensorEventListener, Runnable
+public class AccelService extends Service
 {
-  private SensorManager mSensorManager;
-  private Sensor mAccelerometer;
-  private static long msInterval = 45000;
-  private Vector<JSONObject> fixes;
   
-  private static final String PREFERENCE_NAME = "ucsbprefs";
-  private int filenum;
-  private String deviceId;
-  private TelephonyManager tm;
-  private Timer acclTimer;
-  private BurstSD burstSD;
-  private double standardDeviation;
-  private SharedPreferences appSharedPrefs;
-  private float calibrationSD;
-  private float sddif;
-  
-  private Handler handler;
-  private WakeLock wakeLock;
   private AlarmReceiver alarmReceiver;
   private GenerateUserActivityThread generateUserActivityThread;
   private ScreenOffBroadcastReceiver screenOffBroadcastReceiver;
   
-  
   private boolean samplingStarted = false;
   
-  
-//  public AccelService(Context context, int param)
-//  {
-//	  mSensorManager = (SensorManager) context.getSystemService(SENSOR_SERVICE);
-//	  mAccelerometer = mSensorManager.getSensorList(Sensor.TYPE_ACCELEROMETER).get(0);
-//	  fixes = new Vector<JSONObject>();
-//	  
-//  }
-  
-  
-  public void setFixes(Vector<JSONObject> fixes) 
-  {
-	this.fixes = fixes;
-  }
-  
+
   
   public void onCreate() 
   {	 
 	  showNotification();
-	  
-	  	tm = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-		String tmDevice, tmSerial, androidId;
-		tmDevice = "" + tm.getDeviceId();
-		tmSerial = "" + tm.getSimSerialNumber();
-		androidId = "" + android.provider.Settings.Secure.getString(getContentResolver(), android.provider.Settings.Secure.ANDROID_ID);
-		UUID deviceUuid = new UUID(androidId.hashCode(), ((long)tmDevice.hashCode() << 32) | tmSerial.hashCode());
-		deviceId = deviceUuid.toString();
-		 
-		
-		screenOffBroadcastReceiver = new ScreenOffBroadcastReceiver();
-		IntentFilter screenOffFilter = new IntentFilter();
-		screenOffFilter.addAction( Intent.ACTION_SCREEN_OFF );
-		
-		registerReceiver( screenOffBroadcastReceiver, screenOffFilter );
-	
-		mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-		mAccelerometer = mSensorManager.getSensorList(Sensor.TYPE_ACCELEROMETER).get(0);
-	    fixes = new Vector<JSONObject>();
-	    
-	    // Get Calibration SD from Shared Preferences
-	    this.appSharedPrefs = getSharedPreferences("edu.ucsb.geog", MODE_WORLD_READABLE);
-	    this.calibrationSD = appSharedPrefs.getFloat("callibrationSD", -99);
-	    
-	    //timer = new Timer();
-	    handler = new Handler();
-	    if(wakeLock == null)
-	    {
-	       PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-	       wakeLock = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK | PowerManager.ON_AFTER_RELEASE, "tag");	        
-	    }
-	    
-	    
-	        
+	  	
+	  //This screenOffBroadcastReceiver is responsible for turning the screen on when the user manually turned it off
+	  // It is not necessary if the sensors can still work when the screen is off
+	  screenOffBroadcastReceiver = new ScreenOffBroadcastReceiver();
+	  IntentFilter screenOffFilter = new IntentFilter();
+	  screenOffFilter.addAction( Intent.ACTION_SCREEN_OFF );		
+	  registerReceiver( screenOffBroadcastReceiver, screenOffFilter );
+	  //--------------------------------------------------
+	             
   }
   
   public int onStartCommand(Intent intent, int flags, int startId) 
   {
-	  alarmReceiver = new AlarmReceiver();
+	  if(alarmReceiver == null)
+		  alarmReceiver = new AlarmReceiver();
 	  alarmReceiver.SetAlarm(getApplicationContext());
 	  samplingStarted = true;
-	 
-	  
-	  //handler.postAtTime(this,SystemClock.elapsedRealtime()+10000);
-	  
-	 //mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);	
-	 
-	  //Thread thisThread = new Thread(this);
-	  //thisThread.start();
-	  
-	  
-//	  acclTimer = new Timer();
-//      TimerTask doThis;
-//
-//      int delay = 0;   // delay for 0 sec.
-//      int period = 60000;  // repeat every 60 sec.
-//      doThis = new TimerTask() {
-//        public void run() {
-        	//Accelerometer accelerometer = new Accelerometer(mSensorManager, 30000, AccelService.this, calibrationSD); 		
-    		//Thread accelThread = new Thread(accelerometer);
-    		//accelThread.start();
-//        }
-//      };
-//      acclTimer.schedule(doThis, delay, period);
 	  
 	 return START_STICKY;
   }
@@ -153,13 +52,23 @@ public class AccelService extends Service implements SensorEventListener, Runnab
   @Override
   public void onDestroy() 
   {
-	  //mSensorManager.unregisterListener(this);
-	  //acclTimer.cancel();
-	  alarmReceiver.CancelAlarm(getApplicationContext());
+	  //Cancel alarm when the service is destroyed
+	  if(alarmReceiver != null)		  
+		  alarmReceiver.CancelAlarm(getApplicationContext());
 	  samplingStarted = false;
-	  unregisterReceiver( screenOffBroadcastReceiver );
-	  stopForeground(true); 
 	  
+	  //Unregister the screenOffreceiver when the service is destroyed
+	  if(screenOffBroadcastReceiver != null)
+		  unregisterReceiver( screenOffBroadcastReceiver );
+	  
+	  //Cancel the thread which is used to turn the screen on
+	  if( generateUserActivityThread != null ) 
+	  {
+		  generateUserActivityThread.stopThread();
+		  generateUserActivityThread = null;
+	  }
+	  
+	  stopForeground(true); 
 	  
   }
   
@@ -168,68 +77,7 @@ public class AccelService extends Service implements SensorEventListener, Runnab
   {
     return(null);
   }
-   
-  @Override
-	public void onAccuracyChanged(Sensor sensor, int accuracy) 
-  	{
-	
-  	}
 
-  	@Override
-  	public void onSensorChanged(SensorEvent event) 
-  	{
-  		JSONObject fix = new JSONObject();
-  		
-  		try 
-  		{
-  			fix.put("sensor", 1.0);
-  			fix.put("accelx", event.values[0]);
-  			fix.put("accely", event.values[1]);
-  			fix.put("accelz", event.values[2]);
-  			fix.put("ts", new Long(System.currentTimeMillis()/1000));
-		}
-  		catch (Exception e) 
-  		{
-			
-		}
-  		fixes.add(fix);
-  		// Log.v("Vector Size", "Vector Size: "+ fixes.size());
-  		
-  		if(fixes.size()==50)
-  		{
-  			mSensorManager.unregisterListener(this);
-  			
-  			// Calculate the Standard Deviation for the Burst
-  			//this.burstSD = new BurstSD(fixes);
-			//this.standardDeviation = this.burstSD.getSD();
-			//this.sddif = (float) this.standardDeviation - this.calibrationSD;
-			// Log.v("Burst Standard Deviation", ""+ this.standardDeviation);
-			//Log.v("SD Difference", ""+this.sddif);
-			// Log.v("CallibrationSD", ""+v);
-			
-  			try {
-				writeToFile();
-			} catch (JSONException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-  			wakeLock.release();
-  			//handler.postAtTime(this,SystemClock.elapsedRealtime()+10000);
-  			
-  			
-  						
-  			
-  			
-//  			timer.schedule(new TimerTask() {
-//				public void run() {
-//					mSensorManager.registerListener(AccelService.this, mAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);					
-//				}
-//			}, msInterval);
-  			                 			
-  		}
-	
-  	}
-  	
   	
 	private void showNotification()
 	{
@@ -249,96 +97,48 @@ public class AccelService extends Service implements SensorEventListener, Runnab
 	     	     
 	}
 	
-	public void writeToFile() throws JSONException {
-		Vector<JSONObject> fixVector2 = fixes;
-		Log.v("vector size", "size: "+fixVector2.size());
-		fixes = new Vector<JSONObject>();
-		SharedPreferences settings = getSharedPreferences(PREFERENCE_NAME, MODE_WORLD_READABLE);
-		filenum = settings.getInt("ucsb_filenum", 0);
-		File logFile = new File("sdcard/ucsbat_"+deviceId+"-"+filenum+".log");
-		Log.v("Path to file", "Path to file (service): "+logFile);
-	   if (!logFile.exists()) 
-	   {
-	      try {
-	         logFile.createNewFile();
-	      } 
-	      catch (IOException e) {
-	         e.printStackTrace();
-	      }
-	   }
-	   if (fixVector2.size() > 0) {
-           try 
-           {
-	    	   BufferedWriter buf = new BufferedWriter(new FileWriter(logFile, true)); 
-	           /* for (int i=0; i<fixVector2.size(); i++) {
-	        	   
-	                   buf.append(fixVector2.get(i).get("ts").toString().",");
-	                   //Log.v("logs", fixVector2.get(i).toString());
-	                   buf.newLine();
-	           } */
-//	           buf.append(fixVector2.get(0).getString("ts")+","+fixVector2.get(fixVector2.size()-1).getString("ts")+","+this.sddif);
-//	           Log.v("ts", fixVector2.get(0).getString("ts"));
-//	           buf.newLine();
-//	 	       buf.close();  
-	 	       
-	 	      for (int i=0; i<fixVector2.size(); i++) {
-                  buf.append(fixVector2.get(i).toString());
-                  //Log.v("logs", fixVector2.get(i).toString());
-                  buf.newLine();
-	 	      	}
-	 	      buf.close(); 
-            } 
-           catch (IOException e) 
-           {
-                Log.e("TAG", "Could not write file " + e.getMessage());
-            }
-           //running = true;
-	   }
-	}
 
-
-	@Override
-	public void run() 
-	{
-		wakeLock.acquire();
-		mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);	
-			
-	}
 	
-	class ScreenOffBroadcastReceiver extends BroadcastReceiver {
-		private static final String LOG_TAG = "ScreenOffBroadcastReceiver";
-
-		public void onReceive(Context context, Intent intent) {
+	// This part defines the ScreenOffBroadcastReceiver---------------
+	class ScreenOffBroadcastReceiver extends BroadcastReceiver 
+	{
+		public void onReceive(Context context, Intent intent) 
+		{
 			
-			if( mSensorManager != null && samplingStarted ) {
-				if( generateUserActivityThread != null ) {
+			if(samplingStarted) 
+			{
+				if( generateUserActivityThread != null ) 
+				{
 					generateUserActivityThread.stopThread();
 					generateUserActivityThread = null;
 				}
+				
 				generateUserActivityThread = new GenerateUserActivityThread();
 				generateUserActivityThread.start();
 			}
 		}
 	}
 
-	class GenerateUserActivityThread extends Thread {
-		public void run() {
-			
-			try {
+	class GenerateUserActivityThread extends Thread 
+	{
+		public void run() 
+		{
+			try 
+			{
 				Thread.sleep( 2000L );
-			} catch( InterruptedException ex ) {}
+			} 
+			catch( InterruptedException ex ) {}
 			
 			Log.d( "screenoff", "User activity generation thread started" );
 
 			PowerManager pm = (PowerManager)getSystemService(Context.POWER_SERVICE);
-			userActivityWakeLock = 
-				pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP, 
-						"GenerateUserActivity");
+			userActivityWakeLock =  pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP, "GenerateUserActivity");
 			userActivityWakeLock.acquire();
 			
 		}
 
-		public void stopThread() {
+		public void stopThread() 
+		{
 			
 			userActivityWakeLock.release();
 			userActivityWakeLock = null;
@@ -346,8 +146,6 @@ public class AccelService extends Service implements SensorEventListener, Runnab
 
 		PowerManager.WakeLock userActivityWakeLock;
 	}
-
-
-	
+	//---------------------------------------------
 
 }

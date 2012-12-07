@@ -106,16 +106,16 @@ public class Accelerometer extends Observable implements SensorEventListener, Ru
 			Log.v("SD Difference", ""+this.sddif);
 			// Log.v("CallibrationSD", ""+v);
 			Log.v("fix size1:", ""+fixes.size());
-			this.accelService.setFixes(fixes);
-  			try 
-  			{
-  				this.accelService.writeToFile();
-			} 
-  			catch (JSONException e) 
-  			{
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+//			this.accelService.setFixes(fixes);
+//  			try 
+//  			{
+//  				this.accelService.writeToFile();
+//			} 
+//  			catch (JSONException e) 
+//  			{
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
   		}
   			
 		

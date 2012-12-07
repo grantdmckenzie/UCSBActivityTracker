@@ -1,7 +1,6 @@
 package edu.ucsb.geog;
 
 
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -9,17 +8,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.UUID;
 
-
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.InputStreamEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
-
 import android.app.Activity;
-import android.app.AlarmManager;
 import android.app.AlertDialog;
-import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -30,13 +20,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Environment;
-import android.os.Looper;
-import android.os.PowerManager;
-import android.os.PowerManager.WakeLock;
-import android.os.SystemClock;
 import android.preference.PreferenceManager;
-import android.provider.Settings.System;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.View;
@@ -59,10 +43,7 @@ public class UCSBActivityTrackerActivity extends Activity implements OnClickList
 	private ConnectivityManager connectivity;
 	private String deviceId;
 	private static final String PREFERENCE_NAME = "ucsbprefs";
-	
-	private PowerManager powerManager; 
-    private WakeLock wakeLock; 
-	
+	 
 	private SensorManager mSensorManager;
 	private AccelCalibration accelCalibrater = null;
 	
@@ -108,20 +89,9 @@ public class UCSBActivityTrackerActivity extends Activity implements OnClickList
 	    } else {
 	    	buttonDoSomething.setText("Turn Tracker ON");
 	    }
-	    
-	    powerManager = (PowerManager)getSystemService(Context.POWER_SERVICE);
-
-		
-	    //loop();
+	       
 	}
 	
-	 private void loop() {
-//		while(true)
-//		{
-//			SystemClock.currentThreadTimeMillis()
-//		}
-		
-	}
 
 	@Override
 	  protected void onPause() {
@@ -152,13 +122,7 @@ public class UCSBActivityTrackerActivity extends Activity implements OnClickList
 		  if (src.getId() == R.id.btn1) {
 			  buttonDoSomething.setEnabled(false);
 			  if (!trackeron) {
-				  	
-//				Intent thisIntent = new Intent(getApplicationContext(), AlarmReceiver.class);
-//				PendingIntent recurringIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, thisIntent, PendingIntent.FLAG_CANCEL_CURRENT);
-//				AlarmManager alarms = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-//				alarms.setInexactRepeating(AlarmManager.RTC_WAKEUP, SystemClock.elapsedRealtime(),
-//				            60000, recurringIntent);
-				  			  
+				  					  			  
 				  	startService(serviceIntent);
 					trackeron = true;
 					buttonDoSomething.setText("Turn Tracker OFF");
