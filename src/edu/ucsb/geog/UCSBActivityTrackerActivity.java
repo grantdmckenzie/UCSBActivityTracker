@@ -15,6 +15,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.hardware.SensorManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -36,6 +37,7 @@ public class UCSBActivityTrackerActivity extends Activity implements OnClickList
 	private TextView textCaliberation;
 	private TextView textCaliberationSD;
 	private SharedPreferences settings;
+	private Editor prefsEditor;
 	private boolean trackeron;
 	private int filenum;
 	private Intent serviceIntent;
@@ -55,6 +57,7 @@ public class UCSBActivityTrackerActivity extends Activity implements OnClickList
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
 		settings = getSharedPreferences(PREFERENCE_NAME, MODE_WORLD_READABLE);
+		prefsEditor = settings.edit();
 		
 		// For defining unique device id
 		tm = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
@@ -121,16 +124,19 @@ public class UCSBActivityTrackerActivity extends Activity implements OnClickList
 		  SharedPreferences.Editor editor = preferences.edit(); 
 		  if (src.getId() == R.id.btn1) {
 			  buttonDoSomething.setEnabled(false);
-			  if (!trackeron) {
-				  					  			  
+			  if (!trackeron) { 
 				  	startService(serviceIntent);
 					trackeron = true;
 					buttonDoSomething.setText("Turn Tracker OFF");
+					prefsEditor.putBoolean("turnOnWifi", true);
+					prefsEditor.putBoolean("stationary", true);
+			        prefsEditor.commit();
 			  } else {
 				    stopService(serviceIntent);
 					trackeron = false;
 					buttonDoSomething.setText("Turn Tracker ON");
-					
+					prefsEditor.putBoolean("stationary", true);
+			        prefsEditor.commit();
 			  }
 			  buttonDoSomething.setEnabled(true);
 			  editor.putBoolean("ucsb_tracker", trackeron);

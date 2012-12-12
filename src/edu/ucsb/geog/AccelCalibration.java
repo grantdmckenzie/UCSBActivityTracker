@@ -43,6 +43,7 @@ public class AccelCalibration implements SensorEventListener
 	private int count = 0;
 	private BurstSD callibrationSD = null;
 	private double avgSD = 0;
+	private double mean = 0;
 
 	public AccelCalibration(SensorManager mSensorManager, TextView textView, TextView textViewSD, Button calibrationButton, Context context) 
 	{
@@ -115,36 +116,28 @@ public class AccelCalibration implements SensorEventListener
 			int size = fixVector.size();
 			
 			// Log.v("Vector Size", "Vector Size: "+ size);
-			if(size == 60)
+			if(size >= 60)
 			{
-				if(firstFlag == true)
-				{
+
 					// Create new BURSTSD object and calculate the Standard Deviation
 					this.callibrationSD = new BurstSD(fixVector);
-					this.avgSD += this.callibrationSD.getSD();
+					this.avgSD = this.callibrationSD.getSD();
+					this.mean = this.callibrationSD.getMean();
+					double lowerbound = this.mean - (this.avgSD * 4);
+					double upperbound = this.mean + (this.avgSD * 4);
 					
-					writeToFile();
-					count++;
-					if(count == 1)
-					{
-						// Print Calibration SD to the output screen
-						// Store SD to shared preferences
-						this.avgSD = this.avgSD / count;
-						this.textViewSD.setText("Callibration SD: "+this.avgSD);
-						prefsEditor.putFloat("callibrationSD", (float) this.avgSD);
-				        prefsEditor.commit();
-				        
-						this.mSensorManager.unregisterListener(this);
-						this.calibrationButton.setEnabled(true);
-						this.calibrationButton.setText("Start Calibration");
-						this.textView.setText("Calibration complete");
-					}
-				}
-				else
-				{
-					fixVector = new Vector<JSONObject>();
-					firstFlag = true;
-				}
+					
+					prefsEditor.putFloat("callibrationLB", (float) lowerbound);
+					prefsEditor.putFloat("callibrationUB", (float) upperbound);
+					this.textViewSD.setText("Callibration SD: "+this.avgSD + "\nCallibration Mean: " + this.mean + "\nCallibration LB: " + lowerbound + "\nCallibration UB: " + upperbound);
+					
+			        prefsEditor.commit();
+			        
+					this.mSensorManager.unregisterListener(this);
+					this.calibrationButton.setEnabled(true);
+					this.calibrationButton.setText("Start Calibration");
+					this.textView.setText("Calibration complete");
+
 			}
 			//Log.v("acceleration", fix.getDouble("accelx")+";"+fix.getDouble("accely")+";"+fix.getDouble("accelz"));			
 			

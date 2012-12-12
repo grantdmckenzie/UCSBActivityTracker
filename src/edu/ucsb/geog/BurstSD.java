@@ -31,6 +31,9 @@ public class BurstSD {
 		}
 		this.mean = this.vSum / this.size;
 	}
+	public double getMean() {
+		return this.mean;
+	}
 	public double getSD() {
 		double temp = 0;
 		for(double a :distribution)

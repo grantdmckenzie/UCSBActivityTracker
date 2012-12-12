@@ -7,6 +7,9 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
+import android.net.wifi.WifiManager;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.util.Log;
@@ -17,10 +20,11 @@ public class AccelService extends Service
   private AlarmReceiver alarmReceiver;
   private GenerateUserActivityThread generateUserActivityThread;
   private ScreenOffBroadcastReceiver screenOffBroadcastReceiver;
-  
+  private WifiManager wifiManager;
+  private Wifi wifi;
   private boolean samplingStarted = false;
-  
-
+  private static final String APP_SHARED_PREFS = "edu.ucsb.geog";
+  private SharedPreferences appSharedPrefs;
   
   public void onCreate() 
   {	 
@@ -33,7 +37,9 @@ public class AccelService extends Service
 	  screenOffFilter.addAction( Intent.ACTION_SCREEN_OFF );		
 	  registerReceiver( screenOffBroadcastReceiver, screenOffFilter );
 	  //--------------------------------------------------
-	             
+	  Context context = getApplicationContext();
+	  this.appSharedPrefs = context.getSharedPreferences(APP_SHARED_PREFS, UCSBActivityTrackerActivity.MODE_WORLD_READABLE);
+	  wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);         
   }
   
   public int onStartCommand(Intent intent, int flags, int startId) 

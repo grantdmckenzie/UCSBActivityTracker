@@ -158,7 +158,6 @@ public class ActivityTrackerService extends Service implements Observer {
 	public void onStart(Intent intent, int startid) {
 		accelerometer.startRecording();
 		accelThread.start();
-		
 		//wifi.startRecording();
 		//wifithread.start();
 			
