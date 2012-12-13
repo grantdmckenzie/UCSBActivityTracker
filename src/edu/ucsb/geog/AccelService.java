@@ -28,10 +28,12 @@ public class AccelService extends Service
 	  	
 	  //This screenOffBroadcastReceiver is responsible for turning the screen on when the user manually turned it off
 	  // It is not necessary if the sensors can still work when the screen is off
-	  screenOffBroadcastReceiver = new ScreenOffBroadcastReceiver();
-	  IntentFilter screenOffFilter = new IntentFilter();
-	  screenOffFilter.addAction( Intent.ACTION_SCREEN_OFF );		
-	  registerReceiver( screenOffBroadcastReceiver, screenOffFilter );
+	  
+	  //screenOffBroadcastReceiver = new ScreenOffBroadcastReceiver();
+	 // IntentFilter screenOffFilter = new IntentFilter();
+	 // screenOffFilter.addAction( Intent.ACTION_SCREEN_OFF );		
+	 // registerReceiver( screenOffBroadcastReceiver, screenOffFilter );
+	  
 	  //--------------------------------------------------
 	             
   }
