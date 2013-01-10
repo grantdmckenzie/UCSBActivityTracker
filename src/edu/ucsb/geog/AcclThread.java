@@ -42,8 +42,7 @@ public class AcclThread implements Runnable, SensorEventListener
 	 private TelephonyManager tm;
 	 private BurstSD burstSD;
 	 private double standardDeviation;
-	 private float callibrationLB;
-	 private float callibrationUB;
+	 private double callibrationSD;
 	 private int outside95count;
 	 private float sddif;
 	 private WakeLock wakeLock;
@@ -76,9 +75,7 @@ public class AcclThread implements Runnable, SensorEventListener
 		  this.appSharedPrefs = context.getSharedPreferences("edu.ucsb.geog", Context.MODE_WORLD_READABLE);
 	      this.prefsEditor = appSharedPrefs.edit();
 	      
-		  this.callibrationLB = appSharedPrefs.getFloat("callibrationLB", -99);
-		  this.callibrationUB = appSharedPrefs.getFloat("callibrationUB", -99);
-		  this.outside95count = 0;
+		  this.callibrationSD = appSharedPrefs.getFloat("callibrationSD", -99);
 		  
 		  wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
 	  }
@@ -107,29 +104,20 @@ public class AcclThread implements Runnable, SensorEventListener
 	  	  {
 	  		  e.printStackTrace();
 	  	  }
-	  	  Log.v("stationary", ""+appSharedPrefs.getBoolean("stationary", true));
 	  	 
 	  	  fixes.add(fix);
-	  	  if (outside95(fix)) {
-	  		  this.outside95count++;
-	  	  }
-	  	  // This is what happens when movement IS detected
-	  	  if (this.outside95count > 4) {
-	  		  if(appSharedPrefs.getBoolean("stationary", true)) {
-	  			  prefsEditor.putBoolean("stationary", false);
-	  			  stationarityHasChanged(true);
-	  		  } else {
-	  			  stationarityHasChanged(false);
-	  		  }
-	  	  // This is what happens when movement is NOT detected
-	  	  } else if(fixes.size()==50) {
-	  		  if(!appSharedPrefs.getBoolean("stationary", true)) {
+	  	  
+	  	  if(fixes.size()==50) {
+	  		  this.burstSD = new BurstSD(fixes);
+	  		  this.standardDeviation = this.burstSD.getSD();
+	  		  this.sddif = (float) Math.abs(this.standardDeviation - this.callibrationSD);
+	  		  Log.v("sd dif", ""+this.sddif);
+	  		  if(!appSharedPrefs.getBoolean("stationary", true) && this.sddif <= 0.1) {
 	  			  prefsEditor.putBoolean("stationary", true);
 	  			  stationarityHasChanged(true);
 	  		  } else {
 	  			  stationarityHasChanged(false);
 	  		  }
-	  		  // Log.v("what is it now", ""+appSharedPrefs.getBoolean("stationary", true));
 	  	  }		
 	  	} 
 	  	
@@ -204,27 +192,6 @@ public class AcclThread implements Runnable, SensorEventListener
 			wakeLock.release();	
 		}
 		
-		// Check to see if the vector of x, y, z is outside the upper and lower bounds of the calibration mean +- standard deviations (3)?
-		private boolean outside95(JSONObject fix) {
-			double x = 0;
-			double y = 0;
-			double z = 0;
-			try {
-				x = (Double) fix.get("accelx");
-				y = (Double) fix.get("accely");
-				z = (Double) fix.get("accelz");
-			} catch (JSONException e) {
-				e.printStackTrace();
-			}
-			
-		  	double v = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2) + Math.pow(z, 2));
-		    // Log.v("cal values", ""+this.callibrationLB + "|" + v + "|" + this.callibrationUB);
-		  	if (v >= this.callibrationLB && v <= this.callibrationUB) {
-		  		return false;
-		  	} else {
-		  		return true;
-		  	}
-		}
 		
 		private void stationarityHasChanged(boolean hasIt) {
 			  	
