@@ -172,6 +172,7 @@ public class Accelerometer extends Observable implements SensorEventListener, Ru
 	
 	public void startRecording()
 	{
+		
 		running = true;
 	}
 	

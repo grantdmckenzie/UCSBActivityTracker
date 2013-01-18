@@ -7,11 +7,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.PowerManager;
 import android.os.SystemClock;
-import android.util.Log;
 
 public class AlarmReceiver extends BroadcastReceiver 
 {
-	private static long msInterval = 60000;
+	private static long msInterval = 10000;
 	private AlarmManager alarmManager;
 
 	public void onReceive(Context context, Intent intent) 
@@ -19,11 +18,12 @@ public class AlarmReceiver extends BroadcastReceiver
         PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
         PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "");
         wl.acquire();
-
-        Log.v("alarm test", "alrm");
+        
+        // Log.v("alarm test", "alrm");
         AcclThread acclThread = new AcclThread(context,wl);
         Thread thread = new Thread(acclThread);
         thread.start();
+        wl.release();
               
     }
 
@@ -46,7 +46,6 @@ public class AlarmReceiver extends BroadcastReceiver
 		
 		Intent intent = new Intent(context, AlarmReceiver.class);
 		PendingIntent sender = PendingIntent.getBroadcast(context, 0, intent, 0);
-		
 		alarmManager.cancel(sender);
 	}
 }

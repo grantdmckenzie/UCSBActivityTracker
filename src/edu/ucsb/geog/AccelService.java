@@ -6,7 +6,6 @@ import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.util.Log;
@@ -17,9 +16,7 @@ public class AccelService extends Service
   private AlarmReceiver alarmReceiver;
   private GenerateUserActivityThread generateUserActivityThread;
   private ScreenOffBroadcastReceiver screenOffBroadcastReceiver;
-  
   private boolean samplingStarted = false;
-  
 
   
   public void onCreate() 
@@ -35,7 +32,7 @@ public class AccelService extends Service
 	 // registerReceiver( screenOffBroadcastReceiver, screenOffFilter );
 	  
 	  //--------------------------------------------------
-	             
+	         
   }
   
   public int onStartCommand(Intent intent, int flags, int startId) 
