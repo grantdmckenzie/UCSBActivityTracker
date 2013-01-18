@@ -20,7 +20,7 @@ public class AlarmReceiver extends BroadcastReceiver
         wl.acquire();
         
         // Log.v("alarm test", "alrm");
-        AcclThread acclThread = new AcclThread(context,wl);
+        AcclThread acclThread = new AcclThread(context);
         Thread thread = new Thread(acclThread);
         thread.start();
         wl.release();

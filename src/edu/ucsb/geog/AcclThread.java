@@ -43,14 +43,12 @@ public class AcclThread implements Runnable, SensorEventListener
 	 private BurstSD burstSD;
 	 private double standardDeviation;
 	 private double callibrationSD;
-	 private int outside95count;
 	 private float sddif;
 	 private WakeLock wakeLock;
-	 private WakeLock wakeLock2;
 	 private WifiManager wifiManager;
 	 
 	  
-	  public AcclThread(Context context, WakeLock wl)
+	  public AcclThread(Context context)
 	  {
 		  this.context = context;
 		  tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
@@ -63,8 +61,7 @@ public class AcclThread implements Runnable, SensorEventListener
 		  		  
 		  mSensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
 		  mAccelerometer = mSensorManager.getSensorList(Sensor.TYPE_ACCELEROMETER).get(0);
-		  fixes = new Vector<JSONObject>();
-		  wakeLock2 = wl;		  
+		  fixes = new Vector<JSONObject>();		  
 		  if(wakeLock == null)
 		  {
 		       PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
@@ -104,80 +101,42 @@ public class AcclThread implements Runnable, SensorEventListener
 	  	  {
 	  		  e.printStackTrace();
 	  	  }
-<<<<<<< HEAD
-	  	  
-	  	 
-	  	  fixes.add(fix);
-	  	  if (outside95(fix)) {
-	  		  this.outside95count++;
-	  	  }
-	  	  // This is what happens when movement IS detected
-	  	  if (this.outside95count > 10) 
-	  	  {
-	  		mSensorManager.unregisterListener(this);	
-	  		  if(appSharedPrefs.getBoolean("stationary", true)) 
-	  		  {
-	  			  prefsEditor.putBoolean("stationary", false);
-	  			  stationarityHasChanged(true);
-	  		  } 
-	  		  else 
-	  		  {
-	  			  stationarityHasChanged(false);
-	  		  }
-	  		  Log.v("stationary", ""+appSharedPrefs.getBoolean("stationary", true));
-	  		  
-	  		try
-			{
-	  			if(wakeLock.isHeld())
-	  			{
-	  				wakeLock.release();
-	  			}
-			} 
-	  		  catch (Exception e)
-			{
-				e.printStackTrace();
-			}
-	  		  	
-	  	  } 
-	  	 // This is what happens when movement is NOT detected
-	  	  else if(fixes.size()==50) 
-	  	  {
-	  		mSensorManager.unregisterListener(this);	
-	  		  if(!appSharedPrefs.getBoolean("stationary", true)) 
-	  		  {
-=======
 	  	 
 	  	  fixes.add(fix);
 	  	  
-	  	  if(fixes.size()==50) {
+	  	  if(fixes.size()==50) 
+	  	  {
+	  		  mSensorManager.unregisterListener(this);
 	  		  this.burstSD = new BurstSD(fixes);
 	  		  this.standardDeviation = this.burstSD.getSD();
 	  		  this.sddif = (float) Math.abs(this.standardDeviation - this.callibrationSD);
 	  		  Log.v("sd dif", ""+this.sddif);
-	  		  if(!appSharedPrefs.getBoolean("stationary", true) && this.sddif <= 0.1) {
->>>>>>> 9d8298b631f4f02153898c09ac5b7e13e0efafdc
+	  		  if(!appSharedPrefs.getBoolean("stationary", true) && this.sddif <= 0.1)
+	  		  {
 	  			  prefsEditor.putBoolean("stationary", true);
 	  			  stationarityHasChanged(true);
-	  		  } 
+	  		  }
+	  		  else if(appSharedPrefs.getBoolean("stationary", true) && this.sddif > 0.1)
+	  		  {
+	  			  prefsEditor.putBoolean("stationary", false);
+	  			  stationarityHasChanged(true);
+	  		  }
 	  		  else 
 	  		  {
 	  			  stationarityHasChanged(false);
 	  		  }
-<<<<<<< HEAD
-	  		  Log.v("stationary", ""+appSharedPrefs.getBoolean("stationary", true));
-	  		try
-			{
-	  			if(wakeLock.isHeld())
-	  			{
+	  		  
+	  		  try
+	  		  {
+	  			  if(wakeLock.isHeld())
+	  			  {
 	  				wakeLock.release();
-	  			}
-			} 
+	  			  }
+	  		  } 
 	  		  catch (Exception e)
-			{
-				e.printStackTrace();
-			}	
-=======
->>>>>>> 9d8298b631f4f02153898c09ac5b7e13e0efafdc
+	  		  {
+	  			  e.printStackTrace();
+	  		  }
 	  	  }		
 	  } 
 	  	
@@ -249,46 +208,20 @@ public class AcclThread implements Runnable, SensorEventListener
 		{
 			wakeLock.acquire();
 			mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);	
-			
 		}
 		
-<<<<<<< HEAD
-		// Check to see if the vector of x, y, z is outside the upper and lower bounds of the calibration mean +- standard deviations (3)?
-		private boolean outside95(JSONObject fix) {
-			double x = 0;
-			double y = 0;
-			double z = 0;
-			try {
-				x = (Double) fix.get("accelx");
-				y = (Double) fix.get("accely");
-				z = (Double) fix.get("accelz");
-			} catch (JSONException e) {
-				e.printStackTrace();
-			}
-			
-		  	double v = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2) + Math.pow(z, 2));
-		     Log.v("cal values", ""+this.callibrationLB + "|" + v + "|" + this.callibrationUB);
-		  	if (v >= this.callibrationLB && v <= this.callibrationUB) {
-		  		return false;
-		  	} else {
-		  		return true;
-		  	}
-		}
-=======
->>>>>>> 9d8298b631f4f02153898c09ac5b7e13e0efafdc
 		
 		private void stationarityHasChanged(boolean hasIt) {
 			  	
-//	  		  if(hasIt) {
-//	  			 try {
-//					writeToFile(scanWifi());
-//				} catch (JSONException e) {
-//					e.printStackTrace();
-//				} 
-//	  		  }
-	  		  prefsEditor.commit();
-	  		  
-	  		  //wakeLock2.release();
+	  		  if(hasIt) {
+	  			 try {
+					writeToFile(scanWifi());
+				} catch (JSONException e) {
+					e.printStackTrace();
+				} 
+	  		  }
+	  		  Log.v("changed", ""+hasIt);
+	  		  prefsEditor.commit();  
 		}
 		
 		public JSONObject scanWifi() throws JSONException {

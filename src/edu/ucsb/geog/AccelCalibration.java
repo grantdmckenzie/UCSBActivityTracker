@@ -8,19 +8,16 @@ import java.util.Vector;
 
 import org.json.JSONObject;
 
-import android.R.anim;
-import android.app.NotificationManager;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.TextView;
-import android.content.Context;
 
 public class AccelCalibration implements SensorEventListener
 {
@@ -184,7 +181,5 @@ public class AccelCalibration implements SensorEventListener
            //running = true;
 	   }
 	}
-	
-	
-
 }
+
