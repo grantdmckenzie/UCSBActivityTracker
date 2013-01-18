@@ -42,8 +42,7 @@ public class AcclThread implements Runnable, SensorEventListener
 	 private TelephonyManager tm;
 	 private BurstSD burstSD;
 	 private double standardDeviation;
-	 private float callibrationLB;
-	 private float callibrationUB;
+	 private double callibrationSD;
 	 private int outside95count;
 	 private float sddif;
 	 private WakeLock wakeLock;
@@ -76,9 +75,7 @@ public class AcclThread implements Runnable, SensorEventListener
 		  this.appSharedPrefs = context.getSharedPreferences("edu.ucsb.geog", Context.MODE_WORLD_READABLE);
 	      this.prefsEditor = appSharedPrefs.edit();
 	      
-		  this.callibrationLB = appSharedPrefs.getFloat("callibrationLB", -99);
-		  this.callibrationUB = appSharedPrefs.getFloat("callibrationUB", -99);
-		  this.outside95count = 0;
+		  this.callibrationSD = appSharedPrefs.getFloat("callibrationSD", -99);
 		  
 		  wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
 	  }
@@ -107,6 +104,7 @@ public class AcclThread implements Runnable, SensorEventListener
 	  	  {
 	  		  e.printStackTrace();
 	  	  }
+<<<<<<< HEAD
 	  	  
 	  	 
 	  	  fixes.add(fix);
@@ -147,6 +145,17 @@ public class AcclThread implements Runnable, SensorEventListener
 	  		mSensorManager.unregisterListener(this);	
 	  		  if(!appSharedPrefs.getBoolean("stationary", true)) 
 	  		  {
+=======
+	  	 
+	  	  fixes.add(fix);
+	  	  
+	  	  if(fixes.size()==50) {
+	  		  this.burstSD = new BurstSD(fixes);
+	  		  this.standardDeviation = this.burstSD.getSD();
+	  		  this.sddif = (float) Math.abs(this.standardDeviation - this.callibrationSD);
+	  		  Log.v("sd dif", ""+this.sddif);
+	  		  if(!appSharedPrefs.getBoolean("stationary", true) && this.sddif <= 0.1) {
+>>>>>>> 9d8298b631f4f02153898c09ac5b7e13e0efafdc
 	  			  prefsEditor.putBoolean("stationary", true);
 	  			  stationarityHasChanged(true);
 	  		  } 
@@ -154,6 +163,7 @@ public class AcclThread implements Runnable, SensorEventListener
 	  		  {
 	  			  stationarityHasChanged(false);
 	  		  }
+<<<<<<< HEAD
 	  		  Log.v("stationary", ""+appSharedPrefs.getBoolean("stationary", true));
 	  		try
 			{
@@ -166,6 +176,8 @@ public class AcclThread implements Runnable, SensorEventListener
 			{
 				e.printStackTrace();
 			}	
+=======
+>>>>>>> 9d8298b631f4f02153898c09ac5b7e13e0efafdc
 	  	  }		
 	  } 
 	  	
@@ -240,6 +252,7 @@ public class AcclThread implements Runnable, SensorEventListener
 			
 		}
 		
+<<<<<<< HEAD
 		// Check to see if the vector of x, y, z is outside the upper and lower bounds of the calibration mean +- standard deviations (3)?
 		private boolean outside95(JSONObject fix) {
 			double x = 0;
@@ -261,6 +274,8 @@ public class AcclThread implements Runnable, SensorEventListener
 		  		return true;
 		  	}
 		}
+=======
+>>>>>>> 9d8298b631f4f02153898c09ac5b7e13e0efafdc
 		
 		private void stationarityHasChanged(boolean hasIt) {
 			  	

@@ -123,13 +123,15 @@ public class AccelCalibration implements SensorEventListener
 					this.callibrationSD = new BurstSD(fixVector);
 					this.avgSD = this.callibrationSD.getSD();
 					this.mean = this.callibrationSD.getMean();
-					double lowerbound = this.mean - (this.avgSD * 4);
-					double upperbound = this.mean + (this.avgSD * 4);
+					// double lowerbound = this.mean - (this.avgSD * 4);
+					// double upperbound = this.mean + (this.avgSD * 4);
 					
 					
-					prefsEditor.putFloat("callibrationLB", (float) lowerbound);
-					prefsEditor.putFloat("callibrationUB", (float) upperbound);
-					this.textViewSD.setText("Callibration SD: "+this.avgSD + "\nCallibration Mean: " + this.mean + "\nCallibration LB: " + lowerbound + "\nCallibration UB: " + upperbound);
+					// prefsEditor.putFloat("callibrationLB", (float) lowerbound);
+					// prefsEditor.putFloat("callibrationUB", (float) upperbound);
+					prefsEditor.putFloat("callibrationSD", (float) this.avgSD);
+					//this.textViewSD.setText("Callibration SD: "+this.avgSD + "\nCallibration Mean: " + this.mean + "\nCallibration LB: " + lowerbound + "\nCallibration UB: " + upperbound);
+					this.textViewSD.setText("Callibration SD: "+this.avgSD + "\nCallibration Mean: " + this.mean);
 					
 			        prefsEditor.commit();
 			        
