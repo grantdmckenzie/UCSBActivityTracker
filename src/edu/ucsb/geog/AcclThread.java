@@ -46,6 +46,8 @@ public class AcclThread implements Runnable, SensorEventListener
 	 private float sddif;
 	 private WakeLock wakeLock;
 	 private WifiManager wifiManager;
+	 private JSONObject prevfix;
+	 private int fixcount;
 	 
 	  
 	  public AcclThread(Context context)
@@ -75,6 +77,8 @@ public class AcclThread implements Runnable, SensorEventListener
 		  this.callibrationSD = appSharedPrefs.getFloat("callibrationSD", -99);
 		  
 		  wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+		  prevfix = null;
+		  fixcount = 0;
 	  }
 	  
 	   
@@ -88,23 +92,55 @@ public class AcclThread implements Runnable, SensorEventListener
 	  public void onSensorChanged(SensorEvent event) 
 	  {
 	  	  JSONObject fix = new JSONObject();
-  		
+	  	  double veclength = 0;
+	  	  
 	  	  try 
 	  	  {
+	  		  if(this.prevfix != null) {
+		  		double prevx = (Double) prevfix.get("accelx");
+				double prevy = (Double) prevfix.get("accely");
+				double prevz = (Double) prevfix.get("accelz");
+		  		veclength = Math.sqrt(Math.pow(prevx-event.values[0], 2) + Math.pow(prevy-event.values[1], 2) + Math.pow(prevz-event.values[2], 2));  
+		  	  }
 	  		  fix.put("sensor", 1.0);
 	  		  fix.put("accelx", event.values[0]);
 	  		  fix.put("accely", event.values[1]);
 	  		  fix.put("accelz", event.values[2]);
 	  		  fix.put("ts", new Long(System.currentTimeMillis()/1000));
+	  		  this.prevfix = fix;
+	  		  fixcount++;
+	  		  // fixes.add(fix);
 	  	  }
 	  	  catch (Exception e) 
 	  	  {
 	  		  e.printStackTrace();
 	  	  }
-	  	 
-	  	  fixes.add(fix);
+	  	 	  	  
+	  	  if (veclength > (this.callibrationSD*10)) {
+	  		  if (appSharedPrefs.getBoolean("stationary", true)) {
+	  			Log.v("vector length", "stationary to movement");
+	  			prefsEditor.putBoolean("stationary", false);
+	  			stationarityHasChanged(true);
+	  		  }
+	  	  } else if(fixcount >= 50) {
+	  		if (!appSharedPrefs.getBoolean("stationary", true)) {
+	  			Log.v("vector length", "movement to stationary");
+	  			prefsEditor.putBoolean("stationary", true);
+	  			stationarityHasChanged(true);
+	  		} else {
+	  			mSensorManager.unregisterListener(this);
+	  		    try {
+	  			  if(wakeLock.isHeld())
+	  			  {
+	  				wakeLock.release();
+	  			  }
+	  		    } catch (Exception e) {
+	  		    	e.printStackTrace();
+	  		    }
+	  		}
+	  	  }
 	  	  
-	  	  if(fixes.size()==50) 
+	  	 /*  if(fixes.size()==50) 
 	  	  {
 	  		  mSensorManager.unregisterListener(this);
 	  		  this.burstSD = new BurstSD(fixes);
@@ -137,7 +173,7 @@ public class AcclThread implements Runnable, SensorEventListener
 	  		  {
 	  			  e.printStackTrace();
 	  		  }
-	  	  }		
+	  	  }		*/
 	  } 
 	  	
 	  		
@@ -190,7 +226,7 @@ public class AcclThread implements Runnable, SensorEventListener
 		  			while(keys.hasNext() ){
 		  				String key = (String)keys.next();
 		  				buf.append(fix.get(key) + ",");
-	  	            	Log.v("wifi scan", ""+fix.get(key));
+	  	            	// Log.v("wifi scan", ""+fix.get(key));
 	  	            }
 		  			buf.newLine();
 		  			buf.close(); 
@@ -222,6 +258,14 @@ public class AcclThread implements Runnable, SensorEventListener
 	  		  }
 	  		  Log.v("changed", ""+hasIt);
 	  		  prefsEditor.commit();  
+	  		  mSensorManager.unregisterListener(this);
+	  		  try {
+	  			  if(wakeLock.isHeld()) {
+	  				wakeLock.release();
+	  			  }
+	  		    } catch (Exception e) {
+	  		    	e.printStackTrace();
+	  		    }
 		}
 		
 		public JSONObject scanWifi() throws JSONException {
