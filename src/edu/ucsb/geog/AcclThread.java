@@ -256,7 +256,7 @@ public class AcclThread implements Runnable, SensorEventListener
 					e.printStackTrace();
 				} 
 	  		  }
-	  		  Log.v("changed", ""+hasIt);
+	  		  // Log.v("changed", ""+hasIt);
 	  		  prefsEditor.commit();  
 	  		  mSensorManager.unregisterListener(this);
 	  		  try {
