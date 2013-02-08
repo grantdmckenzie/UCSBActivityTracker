@@ -112,30 +112,24 @@ public class AccelCalibration implements SensorEventListener
 			fixVector.add(fix);
 			int size = fixVector.size();
 			
-			// Log.v("Vector Size", "Vector Size: "+ size);
-			if(size >= 60)
-			{
-
-					// Create new BURSTSD object and calculate the Standard Deviation
-					this.callibrationSD = new BurstSD(fixVector);
-					this.avgSD = this.callibrationSD.getSD();
-					this.mean = this.callibrationSD.getMean();
-					// double lowerbound = this.mean - (this.avgSD * 4);
-					// double upperbound = this.mean + (this.avgSD * 4);
-					
-					
-					// prefsEditor.putFloat("callibrationLB", (float) lowerbound);
-					// prefsEditor.putFloat("callibrationUB", (float) upperbound);
-					prefsEditor.putFloat("callibrationSD", (float) this.avgSD);
-					//this.textViewSD.setText("Callibration SD: "+this.avgSD + "\nCallibration Mean: " + this.mean + "\nCallibration LB: " + lowerbound + "\nCallibration UB: " + upperbound);
-					this.textViewSD.setText("Callibration SD: "+this.avgSD + "\nCallibration Mean: " + this.mean);
-					
-			        prefsEditor.commit();
+			Log.v("Vector Size", "Vector Size: "+ size);
+			if(size >= 60) {
+				this.mSensorManager.unregisterListener(this);
+				this.calibrationButton.setEnabled(true);
+				this.calibrationButton.setText("Start Calibration");
+				this.textView.setText("Calibration complete");
+				BurstSD callibration = new BurstSD(fixVector);
+				this.avgSD = callibration.getSD();
+				this.textViewSD.setText("Callibration SD: "+this.avgSD);
+				
+			
+				// Create new BURSTSD object and calculate the Standard Deviation
+				
+				prefsEditor.putFloat("callibrationSD", (float) this.avgSD);	
+		        prefsEditor.commit();
 			        
-					this.mSensorManager.unregisterListener(this);
-					this.calibrationButton.setEnabled(true);
-					this.calibrationButton.setText("Start Calibration");
-					this.textView.setText("Calibration complete");
+		        Log.v("Average SD", ""+this.avgSD);
+					
 
 			}
 			//Log.v("acceleration", fix.getDouble("accelx")+";"+fix.getDouble("accely")+";"+fix.getDouble("accelz"));			

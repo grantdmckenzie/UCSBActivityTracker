@@ -100,7 +100,8 @@ public class AcclThread implements Runnable, SensorEventListener
 		  		double prevx = (Double) prevfix.get("accelx");
 				double prevy = (Double) prevfix.get("accely");
 				double prevz = (Double) prevfix.get("accelz");
-		  		veclength = Math.sqrt(Math.pow(prevx-event.values[0], 2) + Math.pow(prevy-event.values[1], 2) + Math.pow(prevz-event.values[2], 2));  
+		  		veclength = Math.sqrt(Math.pow(prevx-event.values[0], 2) + Math.pow(prevy-event.values[1], 2) + Math.pow(prevz-event.values[2], 2)); 
+		  		// Log.v("vector length", veclength +"");
 		  	  }
 	  		  fix.put("sensor", 1.0);
 	  		  fix.put("accelx", event.values[0]);
@@ -120,13 +121,13 @@ public class AcclThread implements Runnable, SensorEventListener
 	  		  if (appSharedPrefs.getBoolean("stationary", true)) {
 	  			Log.v("vector length", "stationary to movement");
 	  			prefsEditor.putBoolean("stationary", false);
-	  			stationarityHasChanged(true);
+	  			stationarityHasChanged(true, veclength, this.callibrationSD);
 	  		  }
 	  	  } else if(fixcount >= 50) {
 	  		if (!appSharedPrefs.getBoolean("stationary", true)) {
 	  			Log.v("vector length", "movement to stationary");
 	  			prefsEditor.putBoolean("stationary", true);
-	  			stationarityHasChanged(true);
+	  			stationarityHasChanged(true, veclength, this.callibrationSD);
 	  		} else {
 	  			mSensorManager.unregisterListener(this);
 	  		    try {
@@ -177,14 +178,14 @@ public class AcclThread implements Runnable, SensorEventListener
 	  } 
 	  	
 	  		
-	  public void writeToFile(JSONObject fix) throws JSONException 
+	  public void writeToFile(JSONObject fix, Double veclength, Double callibrationSD) throws JSONException 
 	  {
 		  // Vector<JSONObject> fixVector2 = fixes;
 		  // Log.v("vector size", "size: "+fixVector2.size());
 		  fixes = new Vector<JSONObject>();
 		  
 		  this.appSharedPrefs.getInt("ucsb_filenum", 0);
-		  File logFile = new File("sdcard/ucsbat_"+deviceId+"-"+filenum+".log");
+		  File logFile = new File("sdcard/UCSB_"+deviceId+".log");
 		  Log.v("Path to file", "Path to file (service): "+logFile);
 		   
 		  if (!logFile.exists()) 
@@ -225,10 +226,17 @@ public class AcclThread implements Runnable, SensorEventListener
 					Iterator<?> keys = fix.keys();
 		  			while(keys.hasNext() ){
 		  				String key = (String)keys.next();
-		  				buf.append(fix.get(key) + ",");
-	  	            	// Log.v("wifi scan", ""+fix.get(key));
+		  				JSONObject d = (JSONObject) fix.get(key);
+		  				String date = new java.text.SimpleDateFormat("dd-MM-yyyy HH:mm:ss").format(d.getLong("ts")*1000);
+		  				buf.append(date + ",");
+		  				buf.append(d.getString("ts") + ",");
+		  				buf.append(veclength + ",");
+		  				buf.append(callibrationSD + ",");
+		  				buf.append(d.getString("BSSID") + ",");
+		  				buf.append(d.getString("Signal"));
+		  				buf.newLine();
+	  	            	// Log.v("wifi scan", ""+date);
 	  	            }
-		  			buf.newLine();
 		  			buf.close(); 
 	           } 
 	           catch (IOException e) 
@@ -247,11 +255,11 @@ public class AcclThread implements Runnable, SensorEventListener
 		}
 		
 		
-		private void stationarityHasChanged(boolean hasIt) {
+		private void stationarityHasChanged(boolean hasIt, Double veclength, Double callibrationSD) {
 			  	
 	  		  if(hasIt) {
 	  			 try {
-					writeToFile(scanWifi());
+					writeToFile(scanWifi(), veclength, callibrationSD);
 				} catch (JSONException e) {
 					e.printStackTrace();
 				} 
