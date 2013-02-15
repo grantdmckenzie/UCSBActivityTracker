@@ -112,11 +112,11 @@ public class AccelCalibration implements SensorEventListener
 			fixVector.add(fix);
 			int size = fixVector.size();
 			
-			Log.v("Vector Size", "Vector Size: "+ size);
+			// Log.v("Vector Size", "Vector Size: "+ size);
 			if(size >= 60) {
 				this.mSensorManager.unregisterListener(this);
-				this.calibrationButton.setEnabled(true);
-				this.calibrationButton.setText("Start Calibration");
+				// this.calibrationButton.setEnabled(true);
+				this.calibrationButton.setText("Calibration Complete");
 				this.textView.setText("Calibration complete");
 				BurstSD callibration = new BurstSD(fixVector);
 				this.avgSD = callibration.getSD();
