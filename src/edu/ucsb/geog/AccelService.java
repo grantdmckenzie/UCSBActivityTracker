@@ -1,5 +1,9 @@
 package edu.ucsb.geog;
 
+import java.util.Observable;
+import java.util.Observer;
+
+import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -8,6 +12,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.os.SystemClock;
 import android.util.Log;
 
 public class AccelService extends Service
@@ -146,5 +151,53 @@ public class AccelService extends Service
 		PowerManager.WakeLock userActivityWakeLock;
 	}
 	//---------------------------------------------
+	public class AlarmReceiver extends BroadcastReceiver implements Observer
+	{
+		private long msInterval = 10000;
+		private AlarmManager alarmManager;
+
+		public void onReceive(Context context, Intent intent) 
+	    {   
+	        PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+	        PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "");
+	        wl.acquire();
+	        
+	        // Log.v("alarm test", "alrm");
+	        AcclThread acclThread = new AcclThread(context);
+	        Thread thread = new Thread(acclThread);
+	        thread.start();
+	        acclThread.addObserver(this);
+	        wl.release();
+	              
+	    }
+
+		public void SetAlarm(Context context)
+		{
+			if(alarmManager == null)
+				alarmManager = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
+			
+			Intent i = new Intent(context, AlarmReceiver.class);
+			PendingIntent pi = PendingIntent.getBroadcast(context, 0, i, 0);
+			
+			alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, SystemClock.elapsedRealtime(), msInterval, pi);
+			
+		}
+
+		public void CancelAlarm(Context context)
+		{
+			if(alarmManager == null)
+				alarmManager = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
+			
+			Intent intent = new Intent(context, AlarmReceiver.class);
+			PendingIntent sender = PendingIntent.getBroadcast(context, 0, intent, 0);
+			alarmManager.cancel(sender);
+		}
+
+		@Override
+		public void update(Observable observable, Object data) {
+			// TODO Auto-generated method stub
+			
+		}
+	}
 
 }

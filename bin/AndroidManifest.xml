@@ -27,6 +27,7 @@
         <service android:enabled="true" android:name=".ActivityTrackerService" />
         <service android:enabled="true" android:name=".AccelService" />
         <receiver  android:process=":remote" android:name="AlarmReceiver"></receiver>
+        <receiver  android:process=":remote" android:name="WifiAlarmReceiver"></receiver> 
     </application>
     
     <instrumentation android:name="android.test.InstrumentationTestRunner"

@@ -113,11 +113,11 @@ public class ActivityTrackerService extends Service implements Observer {
 		networkthread = new Thread(networkcoords);
 		
 		// Wi-Fi
-		wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+		/* wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
         wifi = new Wifi(wifiManager, 60000);
         // IntentFilter filter = new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION);
         wifi.addObserver(this);   
-        wifithread = new Thread(wifi);
+        wifithread = new Thread(wifi); */
         
         // Start runnable thread for sending fixes to database
         vectorthread = new Thread() {

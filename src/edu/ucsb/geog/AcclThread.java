@@ -6,13 +6,19 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Observable;
 import java.util.UUID;
 import java.util.Vector;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.hardware.Sensor;
@@ -26,7 +32,7 @@ import android.os.PowerManager.WakeLock;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
-public class AcclThread implements Runnable, SensorEventListener
+public class AcclThread extends Observable implements Runnable, SensorEventListener
 {
 	
 	 private Context context;
@@ -45,9 +51,11 @@ public class AcclThread implements Runnable, SensorEventListener
 	 private double callibrationSD;
 	 private float sddif;
 	 private WakeLock wakeLock;
-	 private WifiManager wifiManager;
+	 public WifiManager wifiManager;
+	 // private BroadcastReceiver wifiReceiver;
 	 private JSONObject prevfix;
 	 private int fixcount;
+	 private WifiAlarmReceiver WifiAlarmReceiver;
 	 
 	  
 	  public AcclThread(Context context)
@@ -76,7 +84,8 @@ public class AcclThread implements Runnable, SensorEventListener
 	      
 		  this.callibrationSD = appSharedPrefs.getFloat("callibrationSD", -99);
 		  
-		  wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+		  
+		  
 		  prevfix = null;
 		  fixcount = 0;
 	  }
@@ -120,7 +129,7 @@ public class AcclThread implements Runnable, SensorEventListener
 	  	  if (veclength > (this.callibrationSD*5)) {
 	  		  if (appSharedPrefs.getBoolean("stationary", true)) {
 	  			//Log.v("Vector Length:", veclength + " > " + this.callibrationSD*5); 
-	  			//Log.v("Stationarity:", "stationary to movement");
+	  			// Log.v("Stationarity:", "stationary to movement");
 	  			prefsEditor.putBoolean("stationary", false);
 	  			stationarityHasChanged(true, veclength, this.callibrationSD, false);
 	  		  } else {
@@ -129,7 +138,7 @@ public class AcclThread implements Runnable, SensorEventListener
 	  	  } else if(fixcount >= 50 && veclength <= (this.callibrationSD*5)) {
 	  		if (!appSharedPrefs.getBoolean("stationary", true)) {
 	  			//Log.v("Vector Length:", veclength + " <= " + this.callibrationSD*5); 
-	  			//Log.v("Stationarity:", "movement to stationary");
+	  			// Log.v("Stationarity:", "movement to stationary");
 	  			prefsEditor.putBoolean("stationary", true);
 	  			stationarityHasChanged(true, veclength, this.callibrationSD, true);
 	  		} else {
@@ -144,48 +153,11 @@ public class AcclThread implements Runnable, SensorEventListener
 	  		    }
 	  		}
 	  	  }
-	  	  
-	  	 /*  if(fixes.size()==50) 
-	  	  {
-	  		  mSensorManager.unregisterListener(this);
-	  		  this.burstSD = new BurstSD(fixes);
-	  		  this.standardDeviation = this.burstSD.getSD();
-	  		  this.sddif = (float) Math.abs(this.standardDeviation - this.callibrationSD);
-	  		  Log.v("sd dif", ""+this.sddif);
-	  		  if(!appSharedPrefs.getBoolean("stationary", true) && this.sddif <= 0.1)
-	  		  {
-	  			  prefsEditor.putBoolean("stationary", true);
-	  			  stationarityHasChanged(true);
-	  		  }
-	  		  else if(appSharedPrefs.getBoolean("stationary", true) && this.sddif > 0.1)
-	  		  {
-	  			  prefsEditor.putBoolean("stationary", false);
-	  			  stationarityHasChanged(true);
-	  		  }
-	  		  else 
-	  		  {
-	  			  stationarityHasChanged(false);
-	  		  }
-	  		  
-	  		  try
-	  		  {
-	  			  if(wakeLock.isHeld())
-	  			  {
-	  				wakeLock.release();
-	  			  }
-	  		  } 
-	  		  catch (Exception e)
-	  		  {
-	  			  e.printStackTrace();
-	  		  }
-	  	  }		*/
 	  } 
 	  	
 	  		
 	  public void writeToFile(JSONObject fix, Double veclength, Double callibrationSD, String stationary) throws JSONException 
 	  {
-		  // Vector<JSONObject> fixVector2 = fixes;
-		  // Log.v("vector size", "size: "+fixVector2.size());
 		  fixes = new Vector<JSONObject>();
 		  
 		  this.appSharedPrefs.getInt("ucsb_filenum", 0);
@@ -210,25 +182,8 @@ public class AcclThread implements Runnable, SensorEventListener
 	          try 
 	          {
 		    	   BufferedWriter buf = new BufferedWriter(new FileWriter(logFile, true)); 
-		           /* for (int i=0; i<fixVector2.size(); i++) {
-		        	   
-		                   buf.append(fixVector2.get(i).get("ts").toString().",");
-		                   //Log.v("logs", fixVector2.get(i).toString());
-		                   buf.newLine();
-		           } */
-//		           buf.append(fixVector2.get(0).getString("ts")+","+fixVector2.get(fixVector2.size()-1).getString("ts")+","+this.sddif);
-//		           Log.v("ts", fixVector2.get(0).getString("ts"));
-//		           buf.newLine();
-//		 	       buf.close();  
-		 	       
-		 	      /* for (int i=0; i<fixVector2.size(); i++) 
-		 	      {
-	                  buf.append(fixVector2.get(i).toString());
-	                  //Log.v("logs", fixVector2.get(i).toString());
-	                  buf.newLine();
-		 	      } */
-					Iterator<?> keys = fix.keys();
-						
+				   Iterator<?> keys = fix.keys();
+							
 		  			while(keys.hasNext() ){
 		  				String key = (String)keys.next();
 		  				JSONObject d = (JSONObject) fix.get(key);
@@ -265,18 +220,25 @@ public class AcclThread implements Runnable, SensorEventListener
 		private void stationarityHasChanged(boolean hasIt, Double veclength, Double callibrationSD, boolean stationary) {
 			  	
 	  		  if(!stationary) {
-	  			 try {
-	  				// Log.v("changed", "movement");
-					writeToFile(scanWifi(), veclength, callibrationSD, "movement");
-				} catch (JSONException e) {
-					e.printStackTrace();
-				} 
+	  			 Log.v("Accel State", "Moving");
+				// wifiManager.startScan();
+				// writeToFile(scanWifi(), veclength, callibrationSD, "movement"); 
+	  			 setChanged();
+	  			 notifyObservers();
+	  			// If we aren't scanning for wifi, start.
+		  			/* if(!appSharedPrefs.getBoolean("wifiscan", false)) {
+		  				Log.v("Wifi State", "Starting");
+			  			if(WifiAlarmReceiver == null) 
+			  				WifiAlarmReceiver = new WifiAlarmReceiver();
+			  			WifiAlarmReceiver.SetAlarm(context);
+			  			prefsEditor.putBoolean("wifiscan", true);
+		  			} */
 	  		  } else if (stationary && hasIt){
-	  			try {
-					writeToFile(scanWifi(), veclength, callibrationSD, "stationary");
-				} catch (JSONException e) {
-					e.printStackTrace();
-				} 
+	  			// wifiManager.startScan();
+				//writeToFile(scanWifi(), veclength, callibrationSD, "stationary"); 
+	  			Log.v("Accel State", "Stationary");
+	  			if(WifiAlarmReceiver != null)		  
+	  				WifiAlarmReceiver.CancelAlarm(context);
 	  		  }
 	  		  // Log.v("changed", ""+hasIt);
 	  		  prefsEditor.commit();  

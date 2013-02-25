@@ -16,33 +16,39 @@ import android.util.Log;
 public class BurstSD {
 	private ArrayList<Double> setOfVectors;
 	private double vSum;
-	private int size;
 	private float mean;
+	private ArrayList<Double> currentVector;
+	private ArrayList<Double> previousVector;
 	
 	// Incoming Burst of accel values
 	public BurstSD(Vector<JSONObject> vBurst) {
 		
-		this.size = vBurst.size();
-		this.setOfVectors = new ArrayList(this.size);
+		this.setOfVectors = new ArrayList<Double>(vBurst.size()-1);
+		this.currentVector = new ArrayList<Double>(3);
+		this.previousVector = null;
 		
-		double x, y, z, v = 0;
+		double v = 0;
 		
 		for(JSONObject r: vBurst) {
 			try {
-				x = (Double) r.get("accelx");
-				y = (Double) r.get("accely");
-				z = (Double) r.get("accelz");
-
-				v = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2) + Math.pow(z, 2));
-				
-				this.setOfVectors.add(v);
-				this.vSum += v;
+				// get x, y, z from JSON
+				this.currentVector.add(0, (Double) r.get("accelx"));
+				this.currentVector.add(1, (Double) r.get("accely"));
+				this.currentVector.add(2, (Double) r.get("accelz"));
+				// Only calculate the sum vector length if we have two vectors
+				if (this.previousVector != null) {
+					v = Math.sqrt(Math.pow((this.previousVector.get(0)+this.currentVector.get(0)), 2) + Math.pow((this.previousVector.get(1)+this.currentVector.get(1)), 2) + Math.pow((this.previousVector.get(2)+this.currentVector.get(2)), 2));
+					this.setOfVectors.add(v);
+					this.vSum += v;
+				}
+				// Assign the current vector as the previous vector
+				this.previousVector = this.currentVector;
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
 		}
-		this.mean = (float) this.vSum / this.size;
-		
+		// The mean is just the sum divided by size 
+		this.mean = (float) this.vSum / this.setOfVectors.size();	
 	}
 	// return the Standard Deviation
 	public double getSD() {
@@ -50,7 +56,7 @@ public class BurstSD {
 		for(int i = 0; i < this.setOfVectors.size(); i++) {
 			sumsquares += Math.pow((this.setOfVectors.get(i) - this.mean),2); 
 		}
-		double result = sumsquares / (this.size - 1);
+		double result = sumsquares / (this.setOfVectors.size()-1);
 		
 		return Math.sqrt(result);
 	}

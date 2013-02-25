@@ -48,6 +48,7 @@ public class UCSBActivityTrackerActivity extends Activity implements OnClickList
 	 
 	private SensorManager mSensorManager;
 	private AccelCalibration accelCalibrater = null;
+	private WifiAlarmReceiver WifiAlarmReceiver;
 	
 	/** Called when the activity is first created. */
 	@Override
@@ -137,6 +138,9 @@ public class UCSBActivityTrackerActivity extends Activity implements OnClickList
 					buttonDoSomething.setText("Turn Tracker ON");
 					prefsEditor.putBoolean("stationary", true);
 			        prefsEditor.commit();
+			        // kill the wifi scanner if it exists.
+			        if(WifiAlarmReceiver != null)		  
+		  				WifiAlarmReceiver.CancelAlarm(getApplicationContext());
 			  }
 			  buttonDoSomething.setEnabled(true);
 			  editor.putBoolean("ucsb_tracker", trackeron);
