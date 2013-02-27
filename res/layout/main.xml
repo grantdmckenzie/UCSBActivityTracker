@@ -47,17 +47,12 @@
 					android:layout_marginTop="17dp"
 					android:layout_marginLeft="5dp"
 					android:layout_height="wrap_content"></Button>
-				<TextView android:id="@+id/text"
-              		android:layout_width="wrap_content"
-              		android:layout_height="wrap_content"
-              		android:layout_marginTop="17dp"
-					android:layout_marginLeft="5dp"
-              		android:text="Calibration Values" />
+				
 				<TextView android:id="@+id/textCalSD"
               		android:layout_width="wrap_content"
               		android:layout_height="wrap_content"
               		android:layout_marginTop="17dp"
 					android:layout_marginLeft="5dp"
-              		android:text="Calibration Standard Deviation" />
+              		android:text="" />
  		</TableLayout>	
 </LinearLayout>

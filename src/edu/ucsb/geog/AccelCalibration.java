@@ -99,8 +99,8 @@ public class AccelCalibration implements SensorEventListener
 			accelz = event.values[2];	
 			timestamp = new Long(System.currentTimeMillis()/1000);
 			
-			this.textView.setText("x:"+accelx+"\ny:"+accely+"\nz:"+accelz);
-			this.textViewSD.setText("Calculating Standard Deviation...");
+			// this.textView.setText("x:"+accelx+"\ny:"+accely+"\nz:"+accelz);
+			// this.textViewSD.setText("Calculating Standard Deviation...");
 			
 			fix = new JSONObject();
 			fix.put("sensor", 1.0);
@@ -117,7 +117,7 @@ public class AccelCalibration implements SensorEventListener
 				this.mSensorManager.unregisterListener(this);
 				// this.calibrationButton.setEnabled(true);
 				this.calibrationButton.setText("Calibration Complete");
-				this.textView.setText("Calibration complete");
+				// this.textView.setText("Calibration complete");
 				BurstSD callibration = new BurstSD(fixVector);
 				this.avgSD = callibration.getSD();
 				this.textViewSD.setText("Callibration SD: "+this.avgSD);

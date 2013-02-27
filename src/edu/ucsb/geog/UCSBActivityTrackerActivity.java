@@ -82,7 +82,7 @@ public class UCSBActivityTrackerActivity extends Activity implements OnClickList
 		buttonCalibrate = (Button) findViewById(R.id.btn3);
 		buttonCalibrate.setOnClickListener(this);
 		
-		textCaliberation = (TextView)findViewById(R.id.text);
+		// textCaliberation = (TextView)findViewById(R.id.text);
 		textCaliberationSD = (TextView)findViewById(R.id.textCalSD);
 		
 		//serviceIntent = new Intent(this, ActivityTrackerService.class);

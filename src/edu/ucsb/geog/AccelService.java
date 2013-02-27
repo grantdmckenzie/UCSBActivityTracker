@@ -27,7 +27,7 @@ public class AccelService extends Service
   public void onCreate() 
   {	 
 	  showNotification();
-	  	
+	  Log.v("AccelService", "onCreate");
 	  //This screenOffBroadcastReceiver is responsible for turning the screen on when the user manually turned it off
 	  // It is not necessary if the sensors can still work when the screen is off
 	  
@@ -46,7 +46,7 @@ public class AccelService extends Service
 		  alarmReceiver = new AlarmReceiver();
 	  alarmReceiver.SetAlarm(getApplicationContext());
 	  samplingStarted = true;
-	  
+	  Log.v("AccelService", "onStartCommand");
 	 return START_STICKY;
   }
   
@@ -151,11 +151,12 @@ public class AccelService extends Service
 		PowerManager.WakeLock userActivityWakeLock;
 	}
 	//---------------------------------------------
-	public class AlarmReceiver extends BroadcastReceiver implements Observer
+	public static class AlarmReceiver extends BroadcastReceiver implements Observer
 	{
 		private long msInterval = 10000;
 		private AlarmManager alarmManager;
 
+		@Override
 		public void onReceive(Context context, Intent intent) 
 	    {   
 	        PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
@@ -168,11 +169,12 @@ public class AccelService extends Service
 	        thread.start();
 	        acclThread.addObserver(this);
 	        wl.release();
-	              
+	        Log.v("AlarmReceiver", "onReceive");     
 	    }
 
 		public void SetAlarm(Context context)
 		{
+			Log.v("AlarmReceiver", "setAlarm"); 
 			if(alarmManager == null)
 				alarmManager = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
 			
@@ -196,7 +198,7 @@ public class AccelService extends Service
 		@Override
 		public void update(Observable observable, Object data) {
 			// TODO Auto-generated method stub
-			
+			Log.v("Observer", "notified");
 		}
 	}
 

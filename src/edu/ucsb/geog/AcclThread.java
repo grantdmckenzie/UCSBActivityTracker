@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Observable;
@@ -54,6 +55,8 @@ public class AcclThread extends Observable implements Runnable, SensorEventListe
 	 public WifiManager wifiManager;
 	 // private BroadcastReceiver wifiReceiver;
 	 private JSONObject prevfix;
+	 private double vecLength;
+	 private ArrayList<Double> previousVector;
 	 private int fixcount;
 	 private WifiAlarmReceiver WifiAlarmReceiver;
 	 
@@ -83,11 +86,11 @@ public class AcclThread extends Observable implements Runnable, SensorEventListe
 	      this.prefsEditor = appSharedPrefs.edit();
 	      
 		  this.callibrationSD = appSharedPrefs.getFloat("callibrationSD", -99);
+		  this.previousVector = null;
+		  this.vecLength = 0;
 		  
-		  
-		  
-		  prevfix = null;
-		  fixcount = 0;
+		  // prevfix = null;
+		  this.fixcount = 0;
 	  }
 	  
 	   
@@ -100,25 +103,25 @@ public class AcclThread extends Observable implements Runnable, SensorEventListe
 	  	@Override
 	  public void onSensorChanged(SensorEvent event) 
 	  {
-	  	  JSONObject fix = new JSONObject();
+	  	  // JSONObject fix = new JSONObject();
 	  	  double veclength = 0;
 	  	  
 	  	  try 
 	  	  {
-	  		  if(this.prevfix != null) {
-		  		double prevx = (Double) prevfix.get("accelx");
-				double prevy = (Double) prevfix.get("accely");
-				double prevz = (Double) prevfix.get("accelz");
-		  		veclength = Math.sqrt(Math.pow(prevx-event.values[0], 2) + Math.pow(prevy-event.values[1], 2) + Math.pow(prevz-event.values[2], 2)); 
-		  		// Log.v("vector length", veclength +"");
-		  	  }
-	  		  fix.put("sensor", 1.0);
+	  		  if(this.previousVector != null) {
+		  		this.vecLength = Math.sqrt(Math.pow(this.previousVector.get(0)+event.values[0], 2) + Math.pow(this.previousVector.get(1)+event.values[1], 2) + Math.pow(this.previousVector.get(2)+event.values[2], 2)); 
+		  		this.previousVector = new ArrayList<Double>(3);
+	  		  }
+		  	  this.previousVector.add(0, (double) event.values[0]);
+		  	  this.previousVector.add(1, (double) event.values[1]);
+		  	  this.previousVector.add(2, (double) event.values[2]);
+	  		  /* fix.put("sensor", 1.0);
 	  		  fix.put("accelx", event.values[0]);
 	  		  fix.put("accely", event.values[1]);
 	  		  fix.put("accelz", event.values[2]);
 	  		  fix.put("ts", new Long(System.currentTimeMillis()/1000));
-	  		  this.prevfix = fix;
-	  		  fixcount++;
+	  		  this.prevfix = fix; */
+	  		  this.fixcount++;
 	  		  // fixes.add(fix);
 	  	  }
 	  	  catch (Exception e) 
@@ -126,31 +129,24 @@ public class AcclThread extends Observable implements Runnable, SensorEventListe
 	  		  e.printStackTrace();
 	  	  }
 	  	   	  
-	  	  if (veclength > (this.callibrationSD*5)) {
+	  	  if (this.vecLength > (this.callibrationSD*2)) {
+	  		 Log.v("AccelThread", "Movement");
 	  		  if (appSharedPrefs.getBoolean("stationary", true)) {
-	  			//Log.v("Vector Length:", veclength + " > " + this.callibrationSD*5); 
-	  			// Log.v("Stationarity:", "stationary to movement");
 	  			prefsEditor.putBoolean("stationary", false);
-	  			stationarityHasChanged(true, veclength, this.callibrationSD, false);
+	  			// Changed from stationary to movement and we are now moving
+	  			returnStatus(true, false);
 	  		  } else {
-	  			stationarityHasChanged(false, veclength, this.callibrationSD, false);
+	  			// No change and we are now moving
+	  			returnStatus(false, false);
 	  		  }
-	  	  } else if(fixcount >= 50 && veclength <= (this.callibrationSD*5)) {
+	  	  } else if(this.fixcount == 50 && this.vecLength <= (this.callibrationSD*2)) {
+	  		Log.v("AccelThread", "Stationary");
 	  		if (!appSharedPrefs.getBoolean("stationary", true)) {
-	  			//Log.v("Vector Length:", veclength + " <= " + this.callibrationSD*5); 
-	  			// Log.v("Stationarity:", "movement to stationary");
 	  			prefsEditor.putBoolean("stationary", true);
-	  			stationarityHasChanged(true, veclength, this.callibrationSD, true);
+	  			// Changed from movement to stationary and we are now stationary
+	  			returnStatus(true, true);
 	  		} else {
-	  			mSensorManager.unregisterListener(this);
-	  		    try {
-	  			  if(wakeLock.isHeld())
-	  			  {
-	  				wakeLock.release();
-	  			  }
-	  		    } catch (Exception e) {
-	  		    	e.printStackTrace();
-	  		    }
+	  			returnStatus(false, true);
 	  		}
 	  	  }
 	  } 
@@ -216,10 +212,11 @@ public class AcclThread extends Observable implements Runnable, SensorEventListe
 			mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);	
 		}
 		
-		
-		private void stationarityHasChanged(boolean hasIt, Double veclength, Double callibrationSD, boolean stationary) {
+		// Input: Has stationarity changed?  Are we stationary?
+		private void returnStatus(boolean changed, boolean stationary) {
 			  	
-	  		  if(!stationary) {
+			
+	  		 /* if(!stationary) {
 	  			 Log.v("Accel State", "Moving");
 				// wifiManager.startScan();
 				// writeToFile(scanWifi(), veclength, callibrationSD, "movement"); 
@@ -232,16 +229,22 @@ public class AcclThread extends Observable implements Runnable, SensorEventListe
 			  				WifiAlarmReceiver = new WifiAlarmReceiver();
 			  			WifiAlarmReceiver.SetAlarm(context);
 			  			prefsEditor.putBoolean("wifiscan", true);
-		  			} */
+		  			} 
 	  		  } else if (stationary && hasIt){
 	  			// wifiManager.startScan();
 				//writeToFile(scanWifi(), veclength, callibrationSD, "stationary"); 
 	  			Log.v("Accel State", "Stationary");
 	  			if(WifiAlarmReceiver != null)		  
 	  				WifiAlarmReceiver.CancelAlarm(context);
-	  		  }
+	  		  } */
 	  		  // Log.v("changed", ""+hasIt);
+			
+			 // store state
 	  		  prefsEditor.commit();  
+	  		  setChanged();
+			  notifyObservers();
+			
+			  // unregister listener
 	  		  mSensorManager.unregisterListener(this);
 	  		  try {
 	  			  if(wakeLock.isHeld()) {

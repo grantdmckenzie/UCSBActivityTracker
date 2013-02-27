@@ -26,14 +26,13 @@
         </activity>
         <service android:enabled="true" android:name=".ActivityTrackerService" />
         <service android:enabled="true" android:name=".AccelService" />
-        <receiver  android:process=":remote" android:name="AlarmReceiver"></receiver>
-        <receiver  android:process=":remote" android:name="WifiAlarmReceiver"></receiver> 
+        <receiver android:name="AlarmReceiver"></receiver> 
     </application>
     
-    <instrumentation android:name="android.test.InstrumentationTestRunner"
+    <!--   <instrumentation android:name="android.test.InstrumentationTestRunner"
     android:targetPackage="edu.ucsb.geog"
     android:label="UCSBActivityTracker" />
 
-	<uses-library android:name="android.test.runner" />
+	<uses-library android:name="android.test.runner" /> -->
 
 </manifest>
