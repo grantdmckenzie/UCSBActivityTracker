@@ -26,7 +26,7 @@
         </activity>
         <service android:enabled="true" android:name=".ActivityTrackerService" />
         <service android:enabled="true" android:name=".AccelService" />
-        <receiver android:name="AlarmReceiver"></receiver> 
+        <receiver android:enabled="true" android:name=".AccelService$AlarmReceiver"></receiver>
     </application>
     
     <!--   <instrumentation android:name="android.test.InstrumentationTestRunner"
