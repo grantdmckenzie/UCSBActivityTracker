@@ -10,6 +10,7 @@ import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.SystemClock;
@@ -18,10 +19,11 @@ import android.util.Log;
 public class AccelService extends Service
 {
   
-  private AlarmReceiver alarmReceiver;
+  private static AlarmReceiver alarmReceiver;
   private GenerateUserActivityThread generateUserActivityThread;
   private ScreenOffBroadcastReceiver screenOffBroadcastReceiver;
   private boolean samplingStarted = false;
+  private static AlarmManager alarmManager;
 
   
   public void onCreate() 
@@ -44,10 +46,29 @@ public class AccelService extends Service
   {
 	  if(alarmReceiver == null)
 		  alarmReceiver = new AlarmReceiver();
+	  
+	  if(alarmManager == null)
+		  alarmManager = (AlarmManager)getApplicationContext().getSystemService(Context.ALARM_SERVICE);
 	  alarmReceiver.SetAlarm(getApplicationContext());
+	/*  try
+	{
+		  
+		  IntentFilter filter = new IntentFilter();
+	      filter.addAction("com.google.android.c2dm.intent.RECEIVE");
+	      filter.addAction("com.google.android.c2dm.intent.REGISTRATION");
+	      
+		  this.registerReceiver(alarmReceiver, filter, "com.google.android.c2dm.permission.SEND", null);
+		
+	} catch (Exception e)
+	{
+		e.printStackTrace();
+	}
+	  */
+	  
 	  samplingStarted = true;
 	  Log.v("AccelService", "onStartCommand");
-	 return START_STICKY;
+	  return super.onStartCommand(intent,flags,startId);
+	 //return START_STICKY;
   }
   
   
@@ -154,11 +175,12 @@ public class AccelService extends Service
 	public static class AlarmReceiver extends BroadcastReceiver implements Observer
 	{
 		private long msInterval = 10000;
-		private AlarmManager alarmManager;
+		//private AlarmManager alarmManager;
 
 		@Override
 		public void onReceive(Context context, Intent intent) 
 	    {   
+			Log.v("AlarmReceiver", "onReceive"); 
 	        PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
 	        PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "");
 	        wl.acquire();
@@ -175,13 +197,14 @@ public class AccelService extends Service
 		public void SetAlarm(Context context)
 		{
 			Log.v("AlarmReceiver", "setAlarm"); 
-			if(alarmManager == null)
-				alarmManager = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
+			//if(alarmManager == null)
+			//	alarmManager = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
 			
 			Intent i = new Intent(context, AlarmReceiver.class);
 			PendingIntent pi = PendingIntent.getBroadcast(context, 0, i, 0);
 			
 			alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, SystemClock.elapsedRealtime(), msInterval, pi);
+			Log.v("AlarmReceiver", "setRepeating done"); 
 			
 		}
 
