@@ -120,16 +120,19 @@ public class AccelCalibration implements SensorEventListener
 				// this.textView.setText("Calibration complete");
 				BurstSD callibration = new BurstSD(fixVector);
 				this.avgSD = callibration.getSD();
+				this.mean = callibration.getMean();
 				this.textViewSD.setText("Callibration SD: "+this.avgSD);
 				
 			
 				// Create new BURSTSD object and calculate the Standard Deviation
 				
 				prefsEditor.putFloat("callibrationSD", (float) this.avgSD);	
+				prefsEditor.putFloat("callibrationMean", (float) this.mean);	
 		        prefsEditor.commit();
+		        
 			        
-		        Log.v("Average SD", ""+this.avgSD);
-					
+		        Log.v("Callibration SD", ""+this.avgSD);
+		        Log.v("Callibration Mean", ""+this.mean);	
 
 			}
 			//Log.v("acceleration", fix.getDouble("accelx")+";"+fix.getDouble("accely")+";"+fix.getDouble("accelz"));			

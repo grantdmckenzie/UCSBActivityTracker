@@ -50,6 +50,7 @@ public class AcclThread extends Observable implements Runnable, SensorEventListe
 	 private BurstSD burstSD;
 	 private double standardDeviation;
 	 private double callibrationSD;
+	 private double callibrationMean;
 	 private float sddif;
 	 private WakeLock wakeLock;
 	 public WifiManager wifiManager;
@@ -63,6 +64,7 @@ public class AcclThread extends Observable implements Runnable, SensorEventListe
 	  
 	  public AcclThread(Context context)
 	  {
+		  Log.v("AcclThread", "Constructor"); 
 		  this.context = context;
 		  tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
 		  String tmDevice, tmSerial, androidId;
@@ -86,11 +88,13 @@ public class AcclThread extends Observable implements Runnable, SensorEventListe
 	      this.prefsEditor = appSharedPrefs.edit();
 	      
 		  this.callibrationSD = appSharedPrefs.getFloat("callibrationSD", -99);
-		  this.previousVector = null;
+		  this.callibrationMean = appSharedPrefs.getFloat("callibrationMean", -99);
+		  this.previousVector = new ArrayList<Double>(3);
 		  this.vecLength = 0;
 		  
 		  // prevfix = null;
 		  this.fixcount = 0;
+		  // Log.v("AcclThread", "Constructor END"); 
 	  }
 	  
 	   
@@ -103,51 +107,43 @@ public class AcclThread extends Observable implements Runnable, SensorEventListe
 	  	@Override
 	  public void onSensorChanged(SensorEvent event) 
 	  {
-	  	  // JSONObject fix = new JSONObject();
-	  	  double veclength = 0;
-	  	  
 	  	  try 
 	  	  {
-	  		  if(this.previousVector != null) {
-		  		this.vecLength = Math.sqrt(Math.pow(this.previousVector.get(0)+event.values[0], 2) + Math.pow(this.previousVector.get(1)+event.values[1], 2) + Math.pow(this.previousVector.get(2)+event.values[2], 2)); 
-		  		this.previousVector = new ArrayList<Double>(3);
-	  		  }
-		  	  this.previousVector.add(0, (double) event.values[0]);
-		  	  this.previousVector.add(1, (double) event.values[1]);
-		  	  this.previousVector.add(2, (double) event.values[2]);
-	  		  /* fix.put("sensor", 1.0);
-	  		  fix.put("accelx", event.values[0]);
-	  		  fix.put("accely", event.values[1]);
-	  		  fix.put("accelz", event.values[2]);
-	  		  fix.put("ts", new Long(System.currentTimeMillis()/1000));
-	  		  this.prevfix = fix; */
-	  		  this.fixcount++;
-	  		  // fixes.add(fix);
+	  		// Wait until we have at least 2 sensor vals
+	  		if(this.previousVector.size() != 0) {			
+		  	  this.vecLength = Math.sqrt(Math.pow(this.previousVector.get(0)+event.values[0], 2) + Math.pow(this.previousVector.get(1)+event.values[1], 2) + Math.pow(this.previousVector.get(2)+event.values[2], 2)); 	
+		  	  Log.v("AcclThread", "Diff: "+Math.abs(this.vecLength - this.callibrationMean));
+	  		 
+		  	  if (Math.abs(this.vecLength - this.callibrationMean) > this.callibrationSD*2) {
+		  		 Log.v("AccelThread", "Movement");
+		  		  if (appSharedPrefs.getBoolean("stationary", true)) {
+		  			prefsEditor.putBoolean("stationary", false);
+		  			// Changed from stationary to movement and we are now moving
+		  			returnStatus(true, false);
+		  		  } else {
+		  			// No change and we are now moving
+		  			returnStatus(false, false);
+		  		  }
+		  	  } else if((this.fixcount == 50) && Math.abs(this.vecLength - this.callibrationMean) <= this.callibrationSD*2) {
+		  		Log.v("AccelThread", "Stationary");
+		  		if (!appSharedPrefs.getBoolean("stationary", true)) {
+		  			prefsEditor.putBoolean("stationary", true);
+		  			// Changed from movement to stationary and we are now stationary
+		  			returnStatus(true, true);
+		  		} else {
+		  			returnStatus(false, true);
+		  		}
+		  	  } 
+	  		}
+	  		this.previousVector = new ArrayList<Double>(3);
+		  	this.previousVector.add(0, (double) event.values[0]);
+		  	this.previousVector.add(1, (double) event.values[1]);
+		  	this.previousVector.add(2, (double) event.values[2]);
+	  		this.fixcount++;
 	  	  }
 	  	  catch (Exception e) 
 	  	  {
 	  		  e.printStackTrace();
-	  	  }
-	  	   	  
-	  	  if (this.vecLength > (this.callibrationSD*2)) {
-	  		 Log.v("AccelThread", "Movement");
-	  		  if (appSharedPrefs.getBoolean("stationary", true)) {
-	  			prefsEditor.putBoolean("stationary", false);
-	  			// Changed from stationary to movement and we are now moving
-	  			returnStatus(true, false);
-	  		  } else {
-	  			// No change and we are now moving
-	  			returnStatus(false, false);
-	  		  }
-	  	  } else if(this.fixcount == 50 && this.vecLength <= (this.callibrationSD*2)) {
-	  		Log.v("AccelThread", "Stationary");
-	  		if (!appSharedPrefs.getBoolean("stationary", true)) {
-	  			prefsEditor.putBoolean("stationary", true);
-	  			// Changed from movement to stationary and we are now stationary
-	  			returnStatus(true, true);
-	  		} else {
-	  			returnStatus(false, true);
-	  		}
 	  	  }
 	  } 
 	  	

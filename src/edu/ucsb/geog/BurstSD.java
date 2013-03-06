@@ -60,6 +60,9 @@ public class BurstSD {
 		
 		return Math.sqrt(result);
 	}
+	public double getMean() {
+		return this.mean;
+	}
 }
 
 

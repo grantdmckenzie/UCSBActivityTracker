@@ -66,7 +66,7 @@ public class AccelService extends Service
 	  */
 	  
 	  samplingStarted = true;
-	  Log.v("AccelService", "onStartCommand");
+	  // Log.v("AccelService", "onStartCommand");
 	  return super.onStartCommand(intent,flags,startId);
 	 //return START_STICKY;
   }
@@ -180,7 +180,7 @@ public class AccelService extends Service
 		@Override
 		public void onReceive(Context context, Intent intent) 
 	    {   
-			Log.v("AlarmReceiver", "onReceive"); 
+			// Log.v("AlarmReceiver", "onReceive START"); 
 	        PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
 	        PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "");
 	        wl.acquire();
@@ -191,12 +191,12 @@ public class AccelService extends Service
 	        thread.start();
 	        acclThread.addObserver(this);
 	        wl.release();
-	        Log.v("AlarmReceiver", "onReceive");     
+	        // Log.v("AlarmReceiver", "onReceive END");     
 	    }
 
 		public void SetAlarm(Context context)
 		{
-			Log.v("AlarmReceiver", "setAlarm"); 
+			// Log.v("AlarmReceiver", "setAlarm"); 
 			//if(alarmManager == null)
 			//	alarmManager = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
 			
@@ -204,7 +204,7 @@ public class AccelService extends Service
 			PendingIntent pi = PendingIntent.getBroadcast(context, 0, i, 0);
 			
 			alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, SystemClock.elapsedRealtime(), msInterval, pi);
-			Log.v("AlarmReceiver", "setRepeating done"); 
+			// Log.v("AlarmReceiver", "setRepeating done"); 
 			
 		}
 
