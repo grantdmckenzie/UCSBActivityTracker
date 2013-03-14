@@ -33,7 +33,6 @@ public class AccelCalibration implements SensorEventListener
 	private double accely = 0;
 	private double accelz = 0;
 	private long timestamp;
-	private TextView textView;
 	private TextView textViewSD;
 	private Button calibrationButton;
 	private boolean firstFlag = false;
@@ -42,13 +41,12 @@ public class AccelCalibration implements SensorEventListener
 	private double avgSD = 0;
 	private double mean = 0;
 
-	public AccelCalibration(SensorManager mSensorManager, TextView textView, TextView textViewSD, Button calibrationButton, Context context) 
+	public AccelCalibration(SensorManager mSensorManager, TextView textViewSD, Button calibrationButton, Context context) 
 	{
 		this.appSharedPrefs = context.getSharedPreferences(APP_SHARED_PREFS, UCSBActivityTrackerActivity.MODE_WORLD_READABLE);
         this.prefsEditor = appSharedPrefs.edit();
         
 		this.mSensorManager = mSensorManager;
-		this.textView = textView;
 		this.textViewSD = textViewSD;
 		this.calibrationButton = calibrationButton;
 		mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
@@ -99,8 +97,8 @@ public class AccelCalibration implements SensorEventListener
 			accelz = event.values[2];	
 			timestamp = new Long(System.currentTimeMillis()/1000);
 			
-			// this.textView.setText("x:"+accelx+"\ny:"+accely+"\nz:"+accelz);
-			// this.textViewSD.setText("Calculating Standard Deviation...");
+			this.textViewSD.setText("Calculating Standard Deviation: x:"+accelx+"\ny:"+accely+"\nz:"+accelz);
+			//this.textViewSD.setText("Calculating Standard Deviation...");
 			
 			fix = new JSONObject();
 			fix.put("sensor", 1.0);

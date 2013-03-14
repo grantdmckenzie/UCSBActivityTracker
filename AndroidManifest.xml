@@ -29,10 +29,10 @@
         <receiver android:enabled="true" android:name=".AccelService$AlarmReceiver"></receiver>
     </application>
     
-    <!--   <instrumentation android:name="android.test.InstrumentationTestRunner"
+     <instrumentation android:name="android.test.InstrumentationTestRunner"
     android:targetPackage="edu.ucsb.geog"
     android:label="UCSBActivityTracker" />
 
-	<uses-library android:name="android.test.runner" /> -->
+	<uses-library android:name="android.test.runner" /> 
 
 </manifest>

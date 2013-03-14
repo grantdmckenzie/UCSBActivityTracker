@@ -64,7 +64,7 @@ public class AcclThread extends Observable implements Runnable, SensorEventListe
 	  
 	  public AcclThread(Context context)
 	  {
-		  Log.v("AcclThread", "Constructor"); 
+		  //Log.v("AcclThread", "Constructor"); 
 		  this.context = context;
 		  tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
 		  String tmDevice, tmSerial, androidId;
@@ -106,8 +106,72 @@ public class AcclThread extends Observable implements Runnable, SensorEventListe
 
 	  	@Override
 	  public void onSensorChanged(SensorEvent event) 
-	  {
-	  	  try 
+	  {	  		
+	  		JSONObject fix = new JSONObject();
+	   		
+		  	  try 
+		  	  {
+		  		  fix.put("sensor", 1.0);
+		  		  fix.put("accelx", event.values[0]);
+		  		  fix.put("accely", event.values[1]);
+		  		  fix.put("accelz", event.values[2]);
+		  		  fix.put("ts", new Long(System.currentTimeMillis()/1000));
+		  	  }
+		  	  catch (Exception e) 
+		  	  {
+		  		  e.printStackTrace();
+		  	  }
+		  	  
+		  	 
+		  	  fixes.add(fix);
+	
+		  	  if(fixes.size()==50) 
+		  	  {
+		  		mSensorManager.unregisterListener(this);
+		  		
+		  		BurstSD thisBurstSD = new BurstSD(fixes);
+				double thisSD = thisBurstSD.getSD();
+				
+				boolean isStationary = true;
+				double sdDiff = Math.abs(thisSD - this.callibrationSD);
+				Log.v("SD difference", sdDiff+"");
+				
+				if(sdDiff>0.1)
+					isStationary = false;
+		  		
+				if(isStationary)
+				{
+					if(appSharedPrefs.getBoolean("stationary", true))
+					{
+						returnStatus(false,true);
+					}
+					else
+					{
+						prefsEditor.putBoolean("stationary", true);
+						returnStatus(true,true);
+					}
+				}
+				else
+				{
+					if(appSharedPrefs.getBoolean("stationary", true))
+					{
+						prefsEditor.putBoolean("stationary", false);
+						returnStatus(true,false);
+					}
+					else
+					{
+						returnStatus(false,false);
+					}
+					
+				}
+		  	  }
+	  		
+	  		
+	  		
+	  		
+	  		
+	  		
+	  	  /*try 
 	  	  {
 	  		// Wait until we have at least 2 sensor vals
 	  		if(this.previousVector.size() != 0) {			
@@ -145,6 +209,8 @@ public class AcclThread extends Observable implements Runnable, SensorEventListe
 	  	  {
 	  		  e.printStackTrace();
 	  	  }
+	  	  
+	  	  */
 	  } 
 	  	
 	  		
@@ -196,8 +262,7 @@ public class AcclThread extends Observable implements Runnable, SensorEventListe
 	           catch (IOException e) 
 	           {
 	                Log.e("TAG", "Could not write file " + e.getMessage());
-	           }
-	           
+	           }  
 		   }
 		}
 
@@ -233,7 +298,10 @@ public class AcclThread extends Observable implements Runnable, SensorEventListe
 	  			if(WifiAlarmReceiver != null)		  
 	  				WifiAlarmReceiver.CancelAlarm(context);
 	  		  } */
-	  		  // Log.v("changed", ""+hasIt);
+			
+	  		Log.v("changed", ""+changed);
+	  		Log.v("stationary", ""+stationary);
+	  		Log.v("separetor", "--------------------------");
 			
 			 // store state
 	  		  prefsEditor.commit();  
@@ -241,7 +309,7 @@ public class AcclThread extends Observable implements Runnable, SensorEventListe
 			  notifyObservers();
 			
 			  // unregister listener
-	  		  mSensorManager.unregisterListener(this);
+	  		 // mSensorManager.unregisterListener(this);
 	  		  try {
 	  			  if(wakeLock.isHeld()) {
 	  				wakeLock.release();

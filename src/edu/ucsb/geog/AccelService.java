@@ -50,25 +50,12 @@ public class AccelService extends Service
 	  if(alarmManager == null)
 		  alarmManager = (AlarmManager)getApplicationContext().getSystemService(Context.ALARM_SERVICE);
 	  alarmReceiver.SetAlarm(getApplicationContext());
-	/*  try
-	{
-		  
-		  IntentFilter filter = new IntentFilter();
-	      filter.addAction("com.google.android.c2dm.intent.RECEIVE");
-	      filter.addAction("com.google.android.c2dm.intent.REGISTRATION");
-	      
-		  this.registerReceiver(alarmReceiver, filter, "com.google.android.c2dm.permission.SEND", null);
-		
-	} catch (Exception e)
-	{
-		e.printStackTrace();
-	}
-	  */
+	
 	  
 	  samplingStarted = true;
 	  // Log.v("AccelService", "onStartCommand");
-	  return super.onStartCommand(intent,flags,startId);
-	 //return START_STICKY;
+	  //return super.onStartCommand(intent,flags,startId);
+	 return START_STICKY;
   }
   
   
@@ -171,7 +158,13 @@ public class AccelService extends Service
 
 		PowerManager.WakeLock userActivityWakeLock;
 	}
+	
+	
 	//---------------------------------------------
+	
+	
+	
+	
 	public static class AlarmReceiver extends BroadcastReceiver implements Observer
 	{
 		private long msInterval = 10000;
@@ -185,11 +178,13 @@ public class AccelService extends Service
 	        PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "");
 	        wl.acquire();
 	        
-	        // Log.v("alarm test", "alrm");
+	         //Log.v("alarm test", "alrm");
+	        
 	        AcclThread acclThread = new AcclThread(context);
 	        Thread thread = new Thread(acclThread);
 	        thread.start();
 	        acclThread.addObserver(this);
+	        
 	        wl.release();
 	        // Log.v("AlarmReceiver", "onReceive END");     
 	    }
@@ -198,7 +193,7 @@ public class AccelService extends Service
 		{
 			// Log.v("AlarmReceiver", "setAlarm"); 
 			//if(alarmManager == null)
-			//	alarmManager = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
+				//alarmManager = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
 			
 			Intent i = new Intent(context, AlarmReceiver.class);
 			PendingIntent pi = PendingIntent.getBroadcast(context, 0, i, 0);
@@ -210,8 +205,8 @@ public class AccelService extends Service
 
 		public void CancelAlarm(Context context)
 		{
-			if(alarmManager == null)
-				alarmManager = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
+			//if(alarmManager == null)
+				//alarmManager = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
 			
 			Intent intent = new Intent(context, AlarmReceiver.class);
 			PendingIntent sender = PendingIntent.getBroadcast(context, 0, intent, 0);
@@ -221,7 +216,7 @@ public class AccelService extends Service
 		@Override
 		public void update(Observable observable, Object data) {
 			// TODO Auto-generated method stub
-			Log.v("Observer", "notified");
+			//Log.v("Observer", "notified");
 		}
 	}
 

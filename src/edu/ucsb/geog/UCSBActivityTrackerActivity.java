@@ -34,7 +34,6 @@ public class UCSBActivityTrackerActivity extends Activity implements OnClickList
 	private Button buttonDoSomething;
 	private Button buttonSendData;
 	private Button buttonCalibrate;
-	private TextView textCaliberation;
 	private TextView textCaliberationSD;
 	private SharedPreferences settings;
 	private Editor prefsEditor;
@@ -82,7 +81,6 @@ public class UCSBActivityTrackerActivity extends Activity implements OnClickList
 		buttonCalibrate = (Button) findViewById(R.id.btn3);
 		buttonCalibrate.setOnClickListener(this);
 		
-		// textCaliberation = (TextView)findViewById(R.id.text);
 		textCaliberationSD = (TextView)findViewById(R.id.textCalSD);
 		
 		//serviceIntent = new Intent(this, ActivityTrackerService.class);
@@ -156,7 +154,7 @@ public class UCSBActivityTrackerActivity extends Activity implements OnClickList
 				  if(accelCalibrater ==  null)
 				  {
 					  mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-					  accelCalibrater = new AccelCalibration(mSensorManager, textCaliberation, textCaliberationSD, buttonCalibrate, getApplicationContext());	    
+					  accelCalibrater = new AccelCalibration(mSensorManager, textCaliberationSD, buttonCalibrate, getApplicationContext());	    
 				  }
 				  
 				  accelCalibrater.startCaliberation();				  
@@ -171,6 +169,7 @@ public class UCSBActivityTrackerActivity extends Activity implements OnClickList
 			  }
 		  }
 	}
+	
 	
 	private class DownloadDataTask extends AsyncTask<String, Void, String> {
 		private final ProgressDialog dialog = new ProgressDialog(UCSBActivityTrackerActivity.this);
