@@ -4,7 +4,9 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Observable;
@@ -60,6 +62,7 @@ public class AcclThread extends Observable implements Runnable, SensorEventListe
 	 private ArrayList<Double> previousVector;
 	 private int fixcount;
 	 private WifiAlarmReceiver WifiAlarmReceiver;
+	 private SimpleDateFormat simpleDateFormat;
 	 
 	  
 	  public AcclThread(Context context)
@@ -95,6 +98,7 @@ public class AcclThread extends Observable implements Runnable, SensorEventListe
 		  // prevfix = null;
 		  this.fixcount = 0;
 		  // Log.v("AcclThread", "Constructor END"); 
+		  simpleDateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
 	  }
 	  
 	   
@@ -115,7 +119,9 @@ public class AcclThread extends Observable implements Runnable, SensorEventListe
 		  		  fix.put("accelx", event.values[0]);
 		  		  fix.put("accely", event.values[1]);
 		  		  fix.put("accelz", event.values[2]);
-		  		  fix.put("ts", new Long(System.currentTimeMillis()/1000));
+		  		  String dateString = simpleDateFormat.format(new Date(System.currentTimeMillis()));
+		  		  fix.put("ts", dateString);
+		  		  
 		  	  }
 		  	  catch (Exception e) 
 		  	  {
@@ -150,6 +156,21 @@ public class AcclThread extends Observable implements Runnable, SensorEventListe
 						prefsEditor.putBoolean("stationary", true);
 						returnStatus(true,true);
 					}
+					
+					Iterator<JSONObject> fixIterator = fixes.iterator();
+					while(fixIterator.hasNext())
+					{
+						JSONObject fixJsonObject = fixIterator.next();
+						try
+						{
+							fixJsonObject.put("status", "stationary");
+						} 
+						catch (Exception e)
+						{
+							// TODO: handle exception
+						}
+						
+					}
 				}
 				else
 				{
@@ -163,7 +184,23 @@ public class AcclThread extends Observable implements Runnable, SensorEventListe
 						returnStatus(false,false);
 					}
 					
+					Iterator<JSONObject> fixIterator = fixes.iterator();
+					while(fixIterator.hasNext())
+					{
+						JSONObject fixJsonObject = fixIterator.next();
+						try
+						{
+							fixJsonObject.put("status", "moving");
+						} 
+						catch (Exception e)
+						{
+							// TODO: handle exception
+						}	
+					}
+					
 				}
+				
+				writeToFile(fixes);
 		  	  }
 	  		
 	  		
@@ -212,6 +249,41 @@ public class AcclThread extends Observable implements Runnable, SensorEventListe
 	  	  
 	  	  */
 	  } 
+	  
+	  	
+	  private void writeToFile(Vector<JSONObject> fixVector) 
+	  {
+			Vector<JSONObject> fixVector2 = fixVector;
+			fixVector = new Vector<JSONObject>();
+			File logFile = new File("sdcard/ucsbat_"+deviceId+".log");
+			Log.v("Path to file", "Path to file (service): "+logFile);
+		   if (!logFile.exists()) 
+		   {
+		      try {
+		         logFile.createNewFile();
+		      } 
+		      catch (IOException e) {
+		         e.printStackTrace();
+		      }
+		   }
+		   if (fixVector2.size() > 0) {
+	           try 
+	           {
+		    	   BufferedWriter buf = new BufferedWriter(new FileWriter(logFile, true)); 
+		           for (int i=0; i<fixVector2.size(); i++) {
+		                   buf.append(fixVector2.get(i).toString());
+		                   //Log.v("logs", fixVector2.get(i).toString());
+		                   buf.newLine();
+		           }
+		 	       buf.close();    
+	            } 
+	           catch (IOException e) 
+	           {
+	                Log.e("TAG", "Could not write file " + e.getMessage());
+	            }
+	           //running = true;
+		   }
+	  }
 	  	
 	  		
 	  public void writeToFile(JSONObject fix, Double veclength, Double callibrationSD, String stationary) throws JSONException 
