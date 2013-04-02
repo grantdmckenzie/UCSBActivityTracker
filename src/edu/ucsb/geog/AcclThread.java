@@ -61,9 +61,10 @@ public class AcclThread extends Observable implements Runnable, SensorEventListe
 	 private double vecLength;
 	 private ArrayList<Double> previousVector;
 	 private int fixcount;
-	 private WifiAlarmReceiver WifiAlarmReceiver;
+	 private WifiThread WifiAlarmReceiver;
 	 private SimpleDateFormat simpleDateFormat;
-	 
+	 public boolean stationarityChanged;
+	 public boolean stationary;
 	  
 	  public AcclThread(Context context)
 	  {
@@ -202,11 +203,7 @@ public class AcclThread extends Observable implements Runnable, SensorEventListe
 				
 				writeToFile(fixes);
 		  	  }
-	  		
-	  		
-	  		
-	  		
-	  		
+
 	  		
 	  	  /*try 
 	  	  {
@@ -348,7 +345,8 @@ public class AcclThread extends Observable implements Runnable, SensorEventListe
 		// Input: Has stationarity changed?  Are we stationary?
 		private void returnStatus(boolean changed, boolean stationary) {
 			  	
-			
+			 this.stationarityChanged = changed;
+			 this.stationary = stationary;
 	  		 /* if(!stationary) {
 	  			 Log.v("Accel State", "Moving");
 				// wifiManager.startScan();
@@ -371,9 +369,9 @@ public class AcclThread extends Observable implements Runnable, SensorEventListe
 	  				WifiAlarmReceiver.CancelAlarm(context);
 	  		  } */
 			
-	  		Log.v("changed", ""+changed);
+	  		/* Log.v("changed", ""+changed);
 	  		Log.v("stationary", ""+stationary);
-	  		Log.v("separetor", "--------------------------");
+	  		Log.v("separetor", "--------------------------"); */
 			
 			 // store state
 	  		  prefsEditor.commit();  

@@ -10,7 +10,6 @@ import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.SystemClock;
@@ -20,16 +19,17 @@ public class AccelService extends Service
 {
   
   private static AlarmReceiver alarmReceiver;
+  private static AlarmReceiver wifiAlarmReceiver;
   private GenerateUserActivityThread generateUserActivityThread;
   private ScreenOffBroadcastReceiver screenOffBroadcastReceiver;
   private boolean samplingStarted = false;
   private static AlarmManager alarmManager;
-
+  private static AlarmManager wifiAlarmManager;
   
   public void onCreate() 
   {	 
 	  showNotification();
-	  Log.v("AccelService", "onCreate");
+	  // Log.v("AccelService", "onCreate");
 	  //This screenOffBroadcastReceiver is responsible for turning the screen on when the user manually turned it off
 	  // It is not necessary if the sensors can still work when the screen is off
 	  
@@ -46,11 +46,16 @@ public class AccelService extends Service
   {
 	  if(alarmReceiver == null)
 		  alarmReceiver = new AlarmReceiver();
+	  if(wifiAlarmReceiver == null)
+		  wifiAlarmReceiver = new AlarmReceiver();
 	  
 	  if(alarmManager == null)
 		  alarmManager = (AlarmManager)getApplicationContext().getSystemService(Context.ALARM_SERVICE);
+	  if(wifiAlarmManager == null)
+		  wifiAlarmManager = (AlarmManager)getApplicationContext().getSystemService(Context.ALARM_SERVICE);
+	  
 	  alarmReceiver.SetAlarm(getApplicationContext());
-	
+	  wifiAlarmReceiver.SetAlarm(getApplicationContext());
 	  
 	  samplingStarted = true;
 	  // Log.v("AccelService", "onStartCommand");
@@ -58,12 +63,9 @@ public class AccelService extends Service
 	 return START_STICKY;
   }
   
-  
-
-  
-  @Override
-  public void onDestroy() 
-  {
+  	@Override
+  	public void onDestroy() 
+  	{
 	  //Cancel alarm when the service is destroyed
 	  if(alarmReceiver != null)		  
 		  alarmReceiver.CancelAlarm(getApplicationContext());
@@ -82,15 +84,14 @@ public class AccelService extends Service
 	  
 	  stopForeground(true); 
 	  
-  }
+  	}
   
   @Override
-  public IBinder onBind(Intent intent) 
+  	public IBinder onBind(Intent intent) 
   {
     return(null);
   }
 
-  	
 	private void showNotification()
 	{
 		 Notification note=new Notification(R.drawable.iconnotification, getText(R.string.accel_started), System.currentTimeMillis());
@@ -108,8 +109,6 @@ public class AccelService extends Service
 	     startForeground(1337, note);
 	     	     
 	}
-	
-
 	
 	// This part defines the ScreenOffBroadcastReceiver---------------
 	class ScreenOffBroadcastReceiver extends BroadcastReceiver 
@@ -151,7 +150,6 @@ public class AccelService extends Service
 
 		public void stopThread() 
 		{
-			
 			userActivityWakeLock.release();
 			userActivityWakeLock = null;
 		}
@@ -159,26 +157,20 @@ public class AccelService extends Service
 		PowerManager.WakeLock userActivityWakeLock;
 	}
 	
-	
-	//---------------------------------------------
-	
-	
-	
-	
+	// AlarmReceiver inner Class
 	public static class AlarmReceiver extends BroadcastReceiver implements Observer
 	{
 		private long msInterval = 10000;
-		//private AlarmManager alarmManager;
+		private Context alrmContext;
 
 		@Override
 		public void onReceive(Context context, Intent intent) 
 	    {   
 			// Log.v("AlarmReceiver", "onReceive START"); 
+			this.alrmContext = context;
 	        PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
 	        PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "");
 	        wl.acquire();
-	        
-	         //Log.v("alarm test", "alrm");
 	        
 	        AcclThread acclThread = new AcclThread(context);
 	        Thread thread = new Thread(acclThread);
@@ -213,11 +205,58 @@ public class AccelService extends Service
 			alarmManager.cancel(sender);
 		}
 
+		// Receives notifications from the observable (the thread)
 		@Override
 		public void update(Observable observable, Object data) {
-			// TODO Auto-generated method stub
-			//Log.v("Observer", "notified");
+			if(observable instanceof AcclThread) {
+				boolean stationary = ((AcclThread) observable).stationary;
+				boolean stationarityChanged = ((AcclThread) observable).stationarityChanged;
+				if(!stationary && stationarityChanged) {
+					Log.v("AccelService", "MOVING");
+					// If we just started moving, turn on the wifiscanner
+					wifiAlarmReceiver.SetAlarm(this.alrmContext);
+				} else if (stationary && stationarityChanged) {
+					Log.v("AccelService", "JUST BECAME STATIONARY");
+					// If we just stopped moving, turn off the wifiscanner
+					wifiAlarmReceiver.CancelAlarm(this.alrmContext);
+				}
+			}
 		}
 	}
 
+	// WifiAlarmReceiver inner Class
+	public static class WifiAlarmReceiver extends BroadcastReceiver implements Observer
+	{
+		private static long msInterval = 1000;
+
+		public void onReceive(Context context, Intent intent) {  
+			Log.v("WifiAlarmReceiver", "onReceive START");
+			WifiThread wifiThread = new WifiThread(context);
+	        Thread thread = new Thread(wifiThread);
+	        thread.start();
+	        wifiThread.addObserver(this);
+	    }
+
+		public void SetAlarm(Context context)
+		{
+			Log.v("WiFiReceiver", "Set Alarm");
+			Intent i = new Intent(context, WifiAlarmReceiver.class);
+			PendingIntent pi = PendingIntent.getBroadcast(context, 0, i, 0);
+			wifiAlarmManager.setRepeating(AlarmManager.RTC_WAKEUP, SystemClock.elapsedRealtime(), msInterval, pi);
+		}
+
+		public void CancelAlarm(Context context)
+		{
+			Log.v("WiFiReceiver", "Cancel Alarm");
+			Intent intent = new Intent(context, AlarmReceiver.class);
+			PendingIntent sender = PendingIntent.getBroadcast(context, 0, intent, 0);
+			wifiAlarmManager.cancel(sender);
+		}
+
+		@Override
+		public void update(Observable observable, Object data) {
+			// TODO Auto-generated method stub
+			
+		}
+	}
 }

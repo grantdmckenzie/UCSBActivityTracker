@@ -27,12 +27,14 @@
         <service android:enabled="true" android:name=".ActivityTrackerService" />
         <service android:enabled="true" android:name=".AccelService" />
         <receiver android:enabled="true" android:name=".AccelService$AlarmReceiver"></receiver>
+        <receiver android:enabled="true" android:name=".AccelService$WifiAlarmReceiver"></receiver>
+        <uses-library android:name="android.test.runner" /> 
     </application>
     
      <instrumentation android:name="android.test.InstrumentationTestRunner"
     android:targetPackage="edu.ucsb.geog"
     android:label="UCSBActivityTracker" />
 
-	<uses-library android:name="android.test.runner" /> 
+	
 
 </manifest>
