@@ -1,5 +1,6 @@
 package edu.ucsb.geog;
 
+import java.util.HashMap;
 import java.util.Observable;
 import java.util.Observer;
 
@@ -19,7 +20,7 @@ public class AccelService extends Service
 {
   
   private static AlarmReceiver alarmReceiver;
-  private static AlarmReceiver wifiAlarmReceiver;
+  private static WifiAlarmReceiver wifiAlarmReceiver;
   private GenerateUserActivityThread generateUserActivityThread;
   private ScreenOffBroadcastReceiver screenOffBroadcastReceiver;
   private boolean samplingStarted = false;
@@ -47,7 +48,7 @@ public class AccelService extends Service
 	  if(alarmReceiver == null)
 		  alarmReceiver = new AlarmReceiver();
 	  if(wifiAlarmReceiver == null)
-		  wifiAlarmReceiver = new AlarmReceiver();
+		  wifiAlarmReceiver = new WifiAlarmReceiver();
 	  
 	  if(alarmManager == null)
 		  alarmManager = (AlarmManager)getApplicationContext().getSystemService(Context.ALARM_SERVICE);
@@ -55,7 +56,7 @@ public class AccelService extends Service
 		  wifiAlarmManager = (AlarmManager)getApplicationContext().getSystemService(Context.ALARM_SERVICE);
 	  
 	  alarmReceiver.SetAlarm(getApplicationContext());
-	  wifiAlarmReceiver.SetAlarm(getApplicationContext());
+	  // wifiAlarmReceiver.SetAlarm(getApplicationContext());
 	  
 	  samplingStarted = true;
 	  // Log.v("AccelService", "onStartCommand");
@@ -69,6 +70,8 @@ public class AccelService extends Service
 	  //Cancel alarm when the service is destroyed
 	  if(alarmReceiver != null)		  
 		  alarmReceiver.CancelAlarm(getApplicationContext());
+	  if(wifiAlarmReceiver != null)		  
+		  wifiAlarmReceiver.CancelAlarm(getApplicationContext());
 	  samplingStarted = false;
 	  
 	  //Unregister the screenOffreceiver when the service is destroyed
@@ -166,7 +169,7 @@ public class AccelService extends Service
 		@Override
 		public void onReceive(Context context, Intent intent) 
 	    {   
-			// Log.v("AlarmReceiver", "onReceive START"); 
+			// Log.v("AlarmReceiver", "onReceive"); 
 			this.alrmContext = context;
 	        PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
 	        PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "");
@@ -177,8 +180,7 @@ public class AccelService extends Service
 	        thread.start();
 	        acclThread.addObserver(this);
 	        
-	        wl.release();
-	        // Log.v("AlarmReceiver", "onReceive END");     
+	        wl.release();    
 	    }
 
 		public void SetAlarm(Context context)
@@ -217,7 +219,7 @@ public class AccelService extends Service
 					wifiAlarmReceiver.SetAlarm(this.alrmContext);
 				} else if (stationary && stationarityChanged) {
 					Log.v("AccelService", "JUST BECAME STATIONARY");
-					// If we just stopped moving, turn off the wifiscanner
+					// If the mobile device stopped moving, turn off the wifiscanner
 					wifiAlarmReceiver.CancelAlarm(this.alrmContext);
 				}
 			}
@@ -227,19 +229,30 @@ public class AccelService extends Service
 	// WifiAlarmReceiver inner Class
 	public static class WifiAlarmReceiver extends BroadcastReceiver implements Observer
 	{
-		private static long msInterval = 1000;
+		private long msInterval = 60000;
+		private HashMap<String, Integer> previousBSSID;
+		private HashMap<String, Integer> currentBSSID;
 
+		@Override
 		public void onReceive(Context context, Intent intent) {  
-			Log.v("WifiAlarmReceiver", "onReceive START");
+			
+			// Log.v("WifiAlarmReceiver", "onReceive");
+			
+			PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+	        PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "");
+	        wl.acquire();
+	        
 			WifiThread wifiThread = new WifiThread(context);
 	        Thread thread = new Thread(wifiThread);
 	        thread.start();
 	        wifiThread.addObserver(this);
+	        
+	        wl.release();
 	    }
 
 		public void SetAlarm(Context context)
 		{
-			Log.v("WiFiReceiver", "Set Alarm");
+			// Log.v("WiFiReceiver", "Set Alarm");
 			Intent i = new Intent(context, WifiAlarmReceiver.class);
 			PendingIntent pi = PendingIntent.getBroadcast(context, 0, i, 0);
 			wifiAlarmManager.setRepeating(AlarmManager.RTC_WAKEUP, SystemClock.elapsedRealtime(), msInterval, pi);
@@ -247,16 +260,21 @@ public class AccelService extends Service
 
 		public void CancelAlarm(Context context)
 		{
-			Log.v("WiFiReceiver", "Cancel Alarm");
-			Intent intent = new Intent(context, AlarmReceiver.class);
+			// Log.v("WiFiReceiver", "Cancel Alarm");
+			Intent intent = new Intent(context, WifiAlarmReceiver.class);
 			PendingIntent sender = PendingIntent.getBroadcast(context, 0, intent, 0);
 			wifiAlarmManager.cancel(sender);
 		}
 
 		@Override
 		public void update(Observable observable, Object data) {
-			// TODO Auto-generated method stub
-			
+			if(observable instanceof WifiThread) {
+				/* this.currentBSSID = ((WifiThread) observable).gBssids;
+				if (this.previousBSSID != null) {
+					Log.v("WiFiReceiver", ""+this.previousBSSID.size());
+				}
+				this.previousBSSID = this.currentBSSID; */
+			}
 		}
 	}
 }

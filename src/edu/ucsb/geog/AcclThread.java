@@ -141,7 +141,7 @@ public class AcclThread extends Observable implements Runnable, SensorEventListe
 				
 				boolean isStationary = true;
 				double sdDiff = Math.abs(thisSD - this.callibrationSD);
-				Log.v("SD difference", sdDiff+"");
+				// Log.v("SD difference", sdDiff+"");
 				
 				if(sdDiff>0.1)
 					isStationary = false;
@@ -253,7 +253,7 @@ public class AcclThread extends Observable implements Runnable, SensorEventListe
 			Vector<JSONObject> fixVector2 = fixVector;
 			fixVector = new Vector<JSONObject>();
 			File logFile = new File("sdcard/ucsbat_"+deviceId+".log");
-			Log.v("Path to file", "Path to file (service): "+logFile);
+			// Log.v("Path to file", "Path to file (service): "+logFile);
 		   if (!logFile.exists()) 
 		   {
 		      try {
