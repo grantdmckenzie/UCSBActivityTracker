@@ -20,6 +20,8 @@ import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -37,6 +39,7 @@ public class WifiThread extends Observable implements Runnable
 	private String deviceId;
 	private TelephonyManager tm;
 	public HashMap<String, Integer> gBssids;
+	private SharedPreferences appSharedPrefs;
 
 	public WifiThread(Context context) {
 		  this.context = context;
@@ -47,6 +50,8 @@ public class WifiThread extends Observable implements Runnable
 		  androidId = "" + android.provider.Settings.Secure.getString(context.getContentResolver(), android.provider.Settings.Secure.ANDROID_ID);
 		  UUID deviceUuid = new UUID(androidId.hashCode(), ((long)tmDevice.hashCode() << 32) | tmSerial.hashCode());
 		  deviceId = deviceUuid.toString();
+		  
+		  this.appSharedPrefs = context.getSharedPreferences("edu.ucsb.geog", Context.MODE_WORLD_READABLE);
 	}
 	
 	@Override
@@ -71,7 +76,7 @@ public class WifiThread extends Observable implements Runnable
 			    }
 			}
 		}
-		Log.v("WifiThread", ""+gBssids.toString());
+		// Log.v("WifiThread", ""+gBssids.toString());
 		writeToFile(gBssids, start);
 		setChanged();
 		notifyObservers();
@@ -85,6 +90,7 @@ public class WifiThread extends Observable implements Runnable
 	    ArrayList<String> bssids = new ArrayList<String>();
 		for (ScanResult sr : results) {
 			bssids.add(sr.BSSID);
+			// bssids.add(sr.level+"");
 			// Log.v("WiFi", i+": "+sr.BSSID);
 		}     
 		return bssids;
@@ -92,8 +98,8 @@ public class WifiThread extends Observable implements Runnable
 
 	public void writeToFile(HashMap<String, Integer> bssids, long start) {
 
-		  File logFile = new File("sdcard/UCSB_"+deviceId+".wifi");
-		  Log.v("Path to file", "Path to file (service): "+logFile);
+		  File logFile = new File("sdcard/UCSB_"+deviceId+".wifilocs");
+		  // Log.v("Path to file", "Path to file (service): "+logFile);
 		   
 		  if (!logFile.exists()) 
 		  {
@@ -114,11 +120,18 @@ public class WifiThread extends Observable implements Runnable
 				  String key = (String)iBssids.next();
 				  Integer value = (Integer)bssids.get(key);
 				  String date = new java.text.SimpleDateFormat("dd-MM-yyyy HH:mm:ss").format(start);
+				  
 				  buf.append(start+",");
-				  buf.append(date+",");
+				  buf.append(appSharedPrefs.getLong("gpstime", -99)+",");
+				  buf.append(appSharedPrefs.getString("gpslat", "-99")+",");
+				  buf.append(appSharedPrefs.getString("gpslng", "-99")+",");
+				  buf.append(appSharedPrefs.getString("gpsacc", "-99")+",");
+				  buf.append(appSharedPrefs.getString("gpsalt", "-99")+",");
+				  // buf.append(date+",");
 				  buf.append(key+",");
 				  buf.append(value+",");
 				  buf.newLine();
+				  Log.v("WifiThread", appSharedPrefs.getString("gpslat", "-99")+", "+appSharedPrefs.getString("gpslng", "-99")+", "+key);
 			  }
 			  buf.close(); 
 		  } catch (IOException e) {

@@ -16,6 +16,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.graphics.Color;
 import android.hardware.SensorManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -75,8 +76,8 @@ public class UCSBActivityTrackerActivity extends Activity implements OnClickList
 		buttonDoSomething = (Button) findViewById(R.id.btn1);
 		buttonDoSomething.setOnClickListener(this);
 		
-		buttonSendData = (Button) findViewById(R.id.btn2);
-		buttonSendData.setOnClickListener(this);
+		/* buttonSendData = (Button) findViewById(R.id.btn2);
+		buttonSendData.setOnClickListener(this); */
 		
 		buttonCalibrate = (Button) findViewById(R.id.btn3);
 		buttonCalibrate.setOnClickListener(this);
@@ -131,20 +132,23 @@ public class UCSBActivityTrackerActivity extends Activity implements OnClickList
 					prefsEditor.putBoolean("stationary", true);
 			        prefsEditor.commit();
 			  } else {
+				  	
 				    stopService(serviceIntent);
+				    
 					trackeron = false;
 					buttonDoSomething.setText("Turn Tracker ON");
 					prefsEditor.putBoolean("stationary", true);
 			        prefsEditor.commit();
+			        
 			  }
 			  buttonDoSomething.setEnabled(true);
 			  editor.putBoolean("ucsb_tracker", trackeron);
 			  editor.commit();
-		  } else if (src.getId() == R.id.btn2) {
+		  /* } else if (src.getId() == R.id.btn2) {
 			  buttonSendData.setEnabled(false);
 			  new DownloadDataTask().execute();
-		  }
-		  else if(src.getId() == R.id.btn3)
+		  } */
+		  } else if(src.getId() == R.id.btn3)
 		  {
 			  if (buttonCalibrate.getText().equals("Start Calibration"))
 			  {

@@ -103,8 +103,8 @@ public class ActivityTrackerService extends Service implements Observer {
 		// Coordinates (GPS)
 		locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 		coordinate = new Coordinates(locationManager);
-		coordinate.addObserver(this);
-		coordthread = new Thread(coordinate);
+		// coordinate.addObserver(this);
+		// coordthread = new Thread(coordinate);
 		
 		// Coordinates (GPS)
 		locationManager2 = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);

@@ -5,18 +5,27 @@ import java.util.Observable;
 import java.util.Observer;
 
 import android.app.AlarmManager;
+import android.app.AlertDialog;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
+import android.location.Criteria;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.net.wifi.WifiManager;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.SystemClock;
 import android.util.Log;
 
-public class AccelService extends Service
+public class AccelService extends Service 
 {
   
   private static AlarmReceiver alarmReceiver;
@@ -26,6 +35,7 @@ public class AccelService extends Service
   private boolean samplingStarted = false;
   private static AlarmManager alarmManager;
   private static AlarmManager wifiAlarmManager;
+
   
   public void onCreate() 
   {	 
@@ -40,11 +50,16 @@ public class AccelService extends Service
 	 // registerReceiver( screenOffBroadcastReceiver, screenOffFilter );
 	  
 	  //--------------------------------------------------
+
 	         
   }
   
   public int onStartCommand(Intent intent, int flags, int startId) 
   {
+	  WifiManager wifi = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+	  if (!wifi.isWifiEnabled())
+		 wifi.setWifiEnabled(true);
+		
 	  if(alarmReceiver == null)
 		  alarmReceiver = new AlarmReceiver();
 	  if(wifiAlarmReceiver == null)
@@ -61,17 +76,26 @@ public class AccelService extends Service
 	  samplingStarted = true;
 	  // Log.v("AccelService", "onStartCommand");
 	  //return super.onStartCommand(intent,flags,startId);
+	  
+	  
+	  
+	  
 	 return START_STICKY;
   }
-  
+
+	
   	@Override
   	public void onDestroy() 
   	{
 	  //Cancel alarm when the service is destroyed
-	  if(alarmReceiver != null)		  
+	  if(alarmReceiver != null) { 
 		  alarmReceiver.CancelAlarm(getApplicationContext());
-	  if(wifiAlarmReceiver != null)		  
+		  // unregisterReceiver(alarmReceiver);
+	  }
+	  if(wifiAlarmReceiver != null) {
 		  wifiAlarmReceiver.CancelAlarm(getApplicationContext());
+		  // unregisterReceiver(wifiAlarmReceiver);
+	  }
 	  samplingStarted = false;
 	  
 	  //Unregister the screenOffreceiver when the service is destroyed
@@ -194,7 +218,7 @@ public class AccelService extends Service
 			
 			alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, SystemClock.elapsedRealtime(), msInterval, pi);
 			// Log.v("AlarmReceiver", "setRepeating done"); 
-			
+
 		}
 
 		public void CancelAlarm(Context context)
@@ -205,6 +229,7 @@ public class AccelService extends Service
 			Intent intent = new Intent(context, AlarmReceiver.class);
 			PendingIntent sender = PendingIntent.getBroadcast(context, 0, intent, 0);
 			alarmManager.cancel(sender);
+			// Log.v("AccelService","End Cancel Alarm");
 		}
 
 		// Receives notifications from the observable (the thread)
@@ -214,24 +239,30 @@ public class AccelService extends Service
 				boolean stationary = ((AcclThread) observable).stationary;
 				boolean stationarityChanged = ((AcclThread) observable).stationarityChanged;
 				if(!stationary && stationarityChanged) {
-					Log.v("AccelService", "MOVING");
+					Log.v("AccelService", "STARTED MOVING");
 					// If we just started moving, turn on the wifiscanner
 					wifiAlarmReceiver.SetAlarm(this.alrmContext);
 				} else if (stationary && stationarityChanged) {
-					Log.v("AccelService", "JUST BECAME STATIONARY");
+					Log.v("AccelService", "BECAME STATIONARY");
 					// If the mobile device stopped moving, turn off the wifiscanner
 					wifiAlarmReceiver.CancelAlarm(this.alrmContext);
 				}
 			}
 		}
+
 	}
 
+
 	// WifiAlarmReceiver inner Class
-	public static class WifiAlarmReceiver extends BroadcastReceiver implements Observer
+	public static class WifiAlarmReceiver extends BroadcastReceiver implements Observer, LocationListener
 	{
 		private long msInterval = 60000;
 		private HashMap<String, Integer> previousBSSID;
 		private HashMap<String, Integer> currentBSSID;
+		private LocationManager locationManager;
+		private Location location;
+		private SharedPreferences appSharedPrefs;
+		private Editor prefsEditor;
 
 		@Override
 		public void onReceive(Context context, Intent intent) {  
@@ -252,10 +283,26 @@ public class AccelService extends Service
 
 		public void SetAlarm(Context context)
 		{
-			// Log.v("WiFiReceiver", "Set Alarm");
-			Intent i = new Intent(context, WifiAlarmReceiver.class);
-			PendingIntent pi = PendingIntent.getBroadcast(context, 0, i, 0);
-			wifiAlarmManager.setRepeating(AlarmManager.RTC_WAKEUP, SystemClock.elapsedRealtime(), msInterval, pi);
+
+				this.appSharedPrefs = context.getSharedPreferences("edu.ucsb.geog", Context.MODE_WORLD_READABLE);
+			    this.prefsEditor = appSharedPrefs.edit();
+			      
+				Intent i = new Intent(context, WifiAlarmReceiver.class);
+				PendingIntent pi = PendingIntent.getBroadcast(context, 0, i, 0);
+				wifiAlarmManager.setRepeating(AlarmManager.RTC_WAKEUP, SystemClock.elapsedRealtime(), msInterval, pi);
+				this.locationManager = (LocationManager) context.getSystemService(context.LOCATION_SERVICE);
+				this.location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+				if(this.location != null) {
+					prefsEditor.putLong("gpstime", this.location.getTime());
+					prefsEditor.putString("gpslat", ""+this.location.getLatitude());
+					prefsEditor.putString("gpslng", ""+this.location.getLongitude());
+					prefsEditor.commit();  
+					double lat = (double) (this.location.getLatitude());
+				    double lng = (double) (this.location.getLongitude());
+				    Long time = this.location.getTime();
+				}
+			    // Log.v("Coordinates", "Lat:"+lat+", Lng: "+lng+", TS: "+time);
+				this.locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 60, 1, this);
 		}
 
 		public void CancelAlarm(Context context)
@@ -264,6 +311,8 @@ public class AccelService extends Service
 			Intent intent = new Intent(context, WifiAlarmReceiver.class);
 			PendingIntent sender = PendingIntent.getBroadcast(context, 0, intent, 0);
 			wifiAlarmManager.cancel(sender);
+			if(this.locationManager != null)
+				this.locationManager.removeUpdates(this);
 		}
 
 		@Override
@@ -276,5 +325,41 @@ public class AccelService extends Service
 				this.previousBSSID = this.currentBSSID; */
 			}
 		}
+
+		@Override
+		public void onLocationChanged(Location location) {
+			if(location != null) {
+				prefsEditor.putLong("gpstime", location.getTime());
+				prefsEditor.putString("gpslat", ""+location.getLatitude());
+				prefsEditor.putString("gpslng", ""+location.getLongitude());
+				prefsEditor.putString("gpsacc", ""+location.getAccuracy());
+				prefsEditor.putString("gpsalt", ""+location.getAltitude());
+				prefsEditor.commit(); 
+				
+				double lat = (double) (location.getLatitude());
+			    double lng = (double) (location.getLongitude());
+			    Long time = location.getTime();
+			}
+		    // Log.v("Coordinates", "Lat:"+lat+", Lng: "+lng+", TS: "+time);
+		}
+
+		@Override
+		public void onProviderDisabled(String provider) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void onProviderEnabled(String provider) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void onStatusChanged(String provider, int status, Bundle extras) {
+			// TODO Auto-generated method stub
+			
+		}
 	}
+
 }
